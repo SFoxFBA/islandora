@@ -21,6 +21,7 @@ abstract class XMLDatastream {
   private $valid = NULL;
   protected $forceSchema = FALSE; // if set, the datastream will be validated against the specified schema in self::$SCHEMA_URI instead of
   // reading the schema URI from the datastream.
+  // reading the schema URI from the datastream.
   public $pid;
   public $dsid;
 
