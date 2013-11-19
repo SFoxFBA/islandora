@@ -1,6 +1,6 @@
 <?php
 
-// $Id$
+
 
 /**
  * @file
@@ -25,8 +25,8 @@ class formClass {
     $items = array();
 
     $items['admin/settings/fedora_repository'] = array(
-      'title' => t('Configure Islandora'),
-      'description' => t('Enter the Islandora Collection information here'),
+      'title' => t('Islandora Configuration'),
+      'description' => t("Configure Islandora's interaction with Fedora"),
       'page callback' => 'drupal_get_form',
       'page arguments' => array('fedora_repository_admin'),
       'access arguments' => array('administer site configuration'),
@@ -48,7 +48,6 @@ class formClass {
       'file' => 'fedora_repository.solutionpacks.inc',
       'type' => MENU_LOCAL_TASK,
     );
-
     $items['islandoracm.xsd'] = array(
       'title' => t('Islandora Content Model XML Schema Definition'),
       'page callback' => 'fedora_repository_display_schema',
@@ -256,7 +255,7 @@ class formClass {
     $form['fedora_soap_manage_url'] = array(
       '#type' => 'textfield',
       '#title' => t('Fedora SOAP management URL'),
-      '#default_value' => variable_get('fedora_soap_manage_url', 'http://localhost:8080/fedora/services/management?wsdl'), '#description' => t('The URL to use for SOAP API-M connections'),
+      '#default_value' => variable_get('fedora_soap_manage_url', 'http://localhost:8080/fedora/wsdl?api=API-M'), '#description' => t('The URL to use for SOAP API-M connections'),
       '#required' => TRUE,
       '#weight' => -10
     );
@@ -302,12 +301,28 @@ class formClass {
       '#default_value' => variable_get('fedora_repository_title', 'Digital Repository'),
       '#description' => t('The title displayed when viewing collections and objects in  /fedora/repository. Leave blank to display no title. Note that the menus must be rebuilt after changing this variable.'),
     );
+    //have tabs options (like disable)
+    $form['tabs'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Tabs Configuration'),
+      '#description' => t('Configure the tabs avaialble when viewing Fedora objects.'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    //when checked show object details tab
+    $form['tabs']['fedora_repository_show_object_details_tab'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Show Object Details Tab'),
+      '#default_value' => variable_get('fedora_repository_show_object_details_tab', TRUE),
+      '#description' => t("When enabled, the 'Object Details' tab will be visible to users with the correct permissions when viewing an object in the repository"),
+    );
+    
     $form['advanced'] = array(
       '#type' => 'fieldset',
       '#title' => t('Advanced configuration options'),
       '#description' => t('Advanced configuration.  Under normal circumstances these will not be touched'),
-      '#collapsible' => true,
-      '#collapsed' => true,
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
     );
     $form['advanced']['fedora_object_display_title'] = array(
       '#type' => 'select',
@@ -379,7 +394,13 @@ class formClass {
 
     // DC elements
     $previousElement = NULL; // Used in case we have to nest elements for qualified dublin core.
+    
+    $label = null;
     foreach ($form_values as $key => $value) {
+      //echo ($key);
+      if ($key == 'dc:title-0') {
+        $label = $value;
+      } 
       $index = strrpos($key, '-');
       $key = substr($key, 0, $index);
       $test = substr($key, 0, 2);
@@ -400,6 +421,13 @@ class formClass {
       }
     }
 
+    // Save the title
+    if ( $label != null )
+    {
+      $object = new Fedora_Item($form_values['pid']);
+      $object->modify_object($label);
+    } 
+    
     $dom->appendChild($oai);
 
     if (!$client) {
@@ -498,7 +526,7 @@ class formClass {
           '#title' => t('Content models available'),
           '#options' => $potential_models,
           '#default_value' => $selected_model,
-          '#description' => t('Content models define datastream composition, relationships between this and other content models, and the mandatory behaviors associated with each digital object.<br /> Additional information may be found <a href="https://wiki.duraspace.org/display/FEDORACREATE/Content+Models+Overview">here.</a> '),
+          '#description' => t('Content models define datastream composition, relationships between this and other content models, and the mandatory behaviors associated with each digital object.<br /> Additional information may be found <a href="https://wiki.duraspace.org/display/FEDORACREATE/Content+Models+Overview">here.</a>'),
         ),
       ),
       'collection_pid' => array(
@@ -581,13 +609,15 @@ class formClass {
     if (!$this->canShowIngestForm($collection_pid)) {
       return FALSE;
     }
+    
+    drupal_set_title($collection_label);
     if (module_exists('islandora_content_model_forms')) {
       module_load_include('inc', 'islandora_content_model_forms', 'IngestObjectMetadataForm');
       try {
         $form = new IngestObjectMetadataForm();
         return $form->create($collection_pid, $collection_label, $form_state);
       } catch (Exception $e) {
-        $form_state['storage']['xml'] = false; // An error occured revert back to the QDC Form.
+        $form_state['storage']['xml'] = FALSE; // An error occured revert back to the QDC Form.
       }
     }
     return $this->createQDCIngestForm($collection_pid, $collection_label, $form_state);
@@ -810,7 +840,7 @@ class formClass {
         $form = new EditObjectMetadataForm($form_state);
         return $form->create($pid, $client, $form_state);
       } catch (Exception $e) {
-        $form_state['storage']['xml'] = false; // An error occured revert back to the QDC Form.
+        $form_state['storage']['xml'] = FALSE; // An error occured revert back to the QDC Form.
       }
     }
     return $this->createQDCEditForm($pid, $dsid, $client, $form_state);

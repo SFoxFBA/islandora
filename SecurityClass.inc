@@ -1,6 +1,6 @@
 <?php
 
-// $Id$
+
 
 /**
  * @file 
@@ -34,7 +34,6 @@ class SecurityClass {
     $objectHelper = new ObjectHelper();
     // get the childsecurity policy from the collection.
     $policyStream = $objectHelper->getStream($collection_pid, SECURITYCLASS :: $SECURITY_CLASS_SECURITY_STREAM, FALSE);
-
     if ($policyStream == NULL) {
       // no child policy stream so collection is wide open to anyone to ingest, that has the permission ingest in Drupal.
       // maybe we should return FALSE here?? would be more secure.
@@ -72,41 +71,30 @@ class SecurityClass {
     try {
       $xml = new SimpleXMLElement($policyStream);
     } catch (Exception $e) {
-      watchdog(t("Fedora_Repository"), t("No roles found in security policy, could not parse policy stream."), NULL, WATCHDOG_ERROR);
+      watchdog(t("Fedora_Repository"), "No roles found in security policy, could not parse policy stream.", NULL, WATCHDOG_ERROR);
       //we may not want to send this to the screen.
-      drupal_set_message(t('No roles found in security policy, could not parse policy stream: !message', array('!message' => $e->getMessage())), 'error');
+      drupal_set_message(t('No roles found in security policy, could not parse policy stream: !message', array('!message' => check_plain($e->getMessage()))), 'error');
       return NULL;
     }
     $xml->registerXPathNamespace('default', 'urn:oasis:names:tc:xacml:1.0:policy');
 
-    $conditions = $xml->xpath("//default:Condition");
+    $roles = $xml->xpath('//default:SubjectAttributeDesignator[@AttributeId="fedoraRole"]/../default:Apply/default:AttributeValue');
+    $users = $xml->xpath('//default:SubjectAttributeDesignator[@AttributeId="urn:fedora:names:fedora:2.1:subject:loginId"]/../default:Apply/default:AttributeValue');
 
-    foreach ($conditions as $condition) {
-      $designator = $condition->Apply->SubjectAttributeDesignator;
-      if (empty($designator)) {//$disignator may be wrapped by an or
-        $designator = $condition->Apply->Apply->SubjectAttributeDesignator;
-      }
-      $attributeId = strip_tags($designator['AttributeId']);
-
-      if ($attributeId == "fedoraRole") {
-        foreach ($condition->Apply->Apply->AttributeValue as $attributeValue) {
-          $allowedRoles[] = strip_tags($attributeValue->asXML());
-        }
-        foreach ($condition->Apply->Apply->Apply->AttributeValue as $attributeValue) {
-          $allowedRoles[] = strip_tags($attributeValue->asXML());
-        }
-      }
-      if ($attributeId == "urn:fedora:names:fedora:2.1:subject:loginId") {
-        foreach ($condition->Apply->Apply->AttributeValue as $attributeValue) {
-          $allowedUsers[] = strip_tags($attributeValue->asXML());
-        }
-        foreach ($condition->Apply->Apply->Apply->AttributeValue as $attributeValue) {
-          $allowedUsers[] = strip_tags($attributeValue->asXML());
-        }
+    if($roles) {
+      foreach($roles as $role) {
+        $allowedRoles[] = (string)$role;
       }
     }
+    if($users) {
+      foreach($users as $user) {
+        $allowedUsers[] = (string)$user;
+      }
+    }
+
     $usersAndRoles['users'] = $allowedUsers;
     $usersAndRoles['roles'] = $allowedRoles;
+
     return $usersAndRoles;
   }
 
@@ -122,7 +110,7 @@ class SecurityClass {
     try {
       $doc->load(drupal_get_path('module', 'Fedora_Repository') . '/policies/noObjectEditPolicy.xml');
     } catch (exception $e) {
-      watchdog(t("Fedora_Repository"), t("Problem loading policy file."), NULL, WATCHDOG_ERROR);
+      watchdog(t("Fedora_Repository"), "Problem loading policy file.", NULL, WATCHDOG_ERROR);
     }
     $conditions = $doc->getElementsByTagName('Condition');
     foreach ($conditions as $condition) {

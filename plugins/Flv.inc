@@ -1,6 +1,6 @@
 <?php
 
-// $Id$
+
 
 /**
  * @file
@@ -69,7 +69,7 @@ class FormBuilder {
             $oai->appendChild($previousElement);
           }
         } catch (exception $e) {
-          drupal_set_message(t("!e", array('!e' => $e->getMessage())), 'error');
+          drupal_set_message(t('@e', array('@e' => check_plain($e->getMessage()))), 'error');
           continue;
         }
       }
@@ -110,7 +110,7 @@ class FormBuilder {
 
     try {
       $soapHelper = new ConnectionHelper();
-      $client = $soapHelper->getSoapClient(variable_get('fedora_soap_manage_url', 'http://localhost:8080/fedora/services/management?wsdl'));
+      $client = $soapHelper->getSoapClient(variable_get('fedora_soap_manage_url', 'http://localhost:8080/fedora/wsdl?api=API-M'));
 
       if ($client == NULL) {
         drupal_set_message(t('Error getting SOAP client.'), 'error');
@@ -126,7 +126,7 @@ class FormBuilder {
         unlink($form_values['fullpath']);
       }
     } catch (exception $e) {
-      drupal_set_message(t('Error ingesting object: !e', array('!e' => $e->getMessage())), 'error');
+      drupal_set_message(t('Error ingesting object: @e', array('@e' => check_plain($e->getMessage()))), 'error');
       return;
     }
   }

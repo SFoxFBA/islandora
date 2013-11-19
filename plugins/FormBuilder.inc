@@ -1,6 +1,6 @@
 <?php
 
-// $Id$
+
 
 /**
  * @file
@@ -68,7 +68,7 @@ class FormBuilder {
             $oai->appendChild($previousElement);
           }
         } catch (exception $e) {
-          drupal_set_message(t("!e", array('!e' => $e->getMessage())), 'error');
+          drupal_set_message(t('@e', array('@e' => check_plain($e->getMessage()))), 'error');
           continue;
         }
       }
@@ -95,8 +95,8 @@ class FormBuilder {
     try {
       $xml = new SimpleXMLElement($policyStreamDoc);
     } catch (Exception $e) {
-      watchdog(t("Fedora_Repository"), t("Problem getting security policy."), NULL, WATCHDOG_ERROR);
-      drupal_set_message(t('Problem getting security policy: !e', array('!e' => $e->getMessage())), 'error');
+      watchdog(t("Fedora_Repository"), "Problem getting security policy.", NULL, WATCHDOG_ERROR);
+      drupal_set_message(t('Problem getting security policy: @e', array('@e' => check_plain($e->getMessage()))), 'error');
       return FALSE;
     }
     $policyElement = $dom->createDocumentFragment();
@@ -173,7 +173,7 @@ class FormBuilder {
       $object = Fedora_Item::ingest_from_FOXML($dom);
       if (!empty($object->pid)) {
         // drupal_set_message("Item ". l($object->pid, 'fedora/repository/'. $object->pid) . " created successfully.", "status");
-        drupal_set_message(t("Item !pid created successfully.", array('!pid' => l($object->pid, 'fedora/repository/' . $object->pid))), "status");
+        drupal_set_message(t("Item !pid created successfully.", array('!pid' => l(check_plain($object->pid), 'fedora/repository/' . check_plain($object->pid)))), "status");
       }
       if (!empty($_SESSION['fedora_ingest_files'])) {
         foreach ($_SESSION['fedora_ingest_files'] as $dsid => $createdFile) {
@@ -182,8 +182,8 @@ class FormBuilder {
       }
       file_delete($form_values['ingest-file-location']);
     } catch (exception $e) {
-      drupal_set_message(t('Error ingesting object: !e', array('!e' => $e->getMessage())), 'error');
-      watchdog(t("Fedora_Repository"), "Error ingesting object: !e", array('!e' => $e->getMessage()), NULL, WATCHDOG_ERROR);
+      drupal_set_message(t('Error ingesting object: @e', array('@e' => check_plain($e->getMessage()))), 'error');
+      watchdog(t("Fedora_Repository"), "Error ingesting object: @e", array('@e' => check_plain($e->getMessage())), NULL, WATCHDOG_ERROR);
       return;
     }
   }

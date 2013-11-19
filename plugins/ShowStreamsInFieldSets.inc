@@ -1,6 +1,6 @@
 <?php
 
-// $Id$
+
 
 /**
  * @file
@@ -109,7 +109,7 @@ class ShowStreamsInFieldSets {
     }
     $dc_html = $objectHelper->getFormattedDC($item);
 
-    $dl_link = l('<div  style="float:left; padding: 10px"><img src="' . $tn_url . '"><br />View Document</div>', 'fedora/repository/' . $this->pid . '/OBJ', array('html' => TRUE));
+    $dl_link = l('<div  style="float:left; padding: 10px"><img src="' . $tn_url . '"><br />' . t('View Document') .'</div>', 'fedora/repository/' . $this->pid . '/OBJ', array('html' => TRUE));
 
     $tabset['first_tab']['tabs']['view'] = array(
       '#type' => 'tabpage',
@@ -183,7 +183,7 @@ class ShowStreamsInFieldSets {
     try {
       $proc = new XsltProcessor();
     } catch (Exception $e) {
-      drupal_set_message(t("!e", array('!e' => $e->getMessage())), 'error');
+      drupal_set_message(t('@e', array('@e' => check_plain($e->getMessage()))), 'error');
       return " ";
     }
     $xsl = new DomDocument();
@@ -237,7 +237,7 @@ class ShowStreamsInFieldSets {
     try {
       $proc = new XsltProcessor();
     } catch (Exception $e) {
-      drupal_set_message(t("!e", array('!e' => $e->getMessage())), 'error');
+      drupal_set_message(t('@e', array('@e' => check_plain($e->getMessage()))), 'error');
       return;
     }
     $xsl = new DomDocument();
