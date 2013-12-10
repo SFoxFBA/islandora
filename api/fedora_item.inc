@@ -47,14 +47,16 @@ class Fedora_Item {
     drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
     module_load_include('inc', 'fedora_repository', 'ConnectionHelper');
     module_load_include('inc', 'fedora_repository', 'api/fedora_utils');
+    //watchdog("BBB2","Fedora const:$pid");
 
     $this->pid = $pid;
+    /*
     if (isset(Fedora_Item::$instantiated_pids[$pid])) {
       $this->objectProfile = & Fedora_Item::$instantiated_pids[$pid]->objectProfile;
       $this->datastreams = & Fedora_Item::$instantiated_pids[$pid]->datastreams;
       $this->datastreams_list = & Fedora_Item::$instantiated_pids[$pid]->datastreams_list;
     }
-    else {
+    else*/ {
       if (empty(self::$connection_helper)) {
         self::$connection_helper = new ConnectionHelper();
       }
@@ -69,7 +71,7 @@ class Fedora_Item {
         $this->objectProfile = '';
         $this->datastreams = array();
       }
-      Fedora_Item::$instantiated_pids[$pid] = &$this;
+      //Fedora_Item::$instantiated_pids[$pid] = &$this;
     }
   }
 
