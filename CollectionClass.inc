@@ -55,6 +55,25 @@ class CollectionClass {
     return $this->getRelatedItems($pid, $itqlquery, $limit, $offset);
   }
 
+   /**
+   * gets objects related to this object.  must include offset and limit
+   * calls getRelatedItems but enforces limit and offset
+   * @param type $pid
+   * @param type $limit
+   * @param type $offset
+   * @param type $sparqlquery
+   * @return type
+   */
+  function getRelatedObjectsBySparql($pid, $limit, $offset, $sparqlquery=NULL) {
+    if (!isset($sparqlquery)) {
+      module_load_include('inc', 'fedora_repository', 'api/fedora_item');
+      $item = new Fedora_Item($pid);
+      if ($item->exists() && array_key_exists('QUERY', $item->datastreams)) {
+        $sparqlquery = $item->get_datastream_dissemination('QUERY');
+      }
+    }
+    return $this->getRelatedItemsBySparql($pid, $sparqlquery, $limit, $offset);
+  }
   /**
    * Gets objects related to this item.  It will query the object for a Query stream and use that as a itql query
    * or if there is no query stream it will use the default.  If you pass a query to this method it will use the passed in query no matter what
@@ -65,7 +84,7 @@ class CollectionClass {
    * @param int $offset
    * @return type 
    */
-  function getRelatedItems($pid, $itqlquery = NULL, $limit = NULL, $offset = NULL) {
+  function getRelatedItems($pid, $itqlquery = NULL, $limit = NULL, $offset = NULL) {  //Debug by Dong @SI
     module_load_include('inc', 'fedora_repository', 'ObjectHelper');
     module_load_include('inc', 'fedora_repository', 'api/fedora_utils');
     if (!isset($offset)) {
@@ -85,7 +104,7 @@ class CollectionClass {
         $query_string = $item->get_datastream_dissemination('QUERY');
       }
       if ($query_string == NULL) {
-        $query_string = 'select $object $title $content from <#ri>
+       /* $query_string = 'select $object $title $content from <#ri>
                              where ($object <fedora-model:label> $title
                              and $object <fedora-model:hasModel> $content
                              and ($object <fedora-rels-ext:isMemberOfCollection> <info:fedora/' . $pid . '>
@@ -93,6 +112,15 @@ class CollectionClass {
                              and $object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>)
                              minus $content <mulgara:is> <info:fedora/fedora-system:FedoraObject-3.0>
                              order by $title';
+       */
+        $query_string = 'select $object $title $content from <#ri>
+                             where ($object <fedora-model:label> $title
+                             and $object <fedora-model:hasModel> $content
+                             and <info:fedora/' . $pid . '> <fedora-rels-ext:hasResource> $object
+                             and $object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>)
+                             minus $content <mulgara:is> <info:fedora/fedora-system:FedoraObject-3.0>
+                             order by $title';
+
       }
     }
     else {
@@ -105,6 +133,62 @@ class CollectionClass {
     $content = '';
     $url = variable_get('fedora_repository_url', 'http://localhost:8080/fedora/risearch');
     $url .= "?type=tuples&flush=TRUE&format=Sparql&limit=$limit&offset=$offset&lang=itql&stream=on&query=" . $query_string;
+    $content .= do_curl($url);
+
+    return $content;
+  }
+
+
+   /**
+   * Gets objects related to this item.  It will query the object for a Query stream and use that as a itql query
+   * or if there is no query stream it will use the default.  If you pass a query to this method it will use the passed in query no matter what
+   * @global type $user
+   * @param type $pid
+   * @param type $itqlquery
+   * @param int $limit
+   * @param int $offset
+   * @return type
+   */
+  function getRelatedItemsBySparql($pid, $sparqlquery = NULL, $limit = NULL, $offset = NULL) {  //Debug by Dong @SI
+    module_load_include('inc', 'fedora_repository', 'ObjectHelper');
+    module_load_include('inc', 'fedora_repository', 'api/fedora_utils');
+    if (!isset($offset)) {
+      $offset = 0;
+    }
+    global $user;
+    if (!fedora_repository_access(OBJECTHELPER :: $OBJECT_HELPER_VIEW_FEDORA, $pid, $user)) {
+      drupal_set_message(t("You do not have access to Fedora objects within the attempted namespace or access to Fedora denied."), 'error');
+      return ' ';
+    }
+    $objectHelper = new ObjectHelper();
+    $query_string = $sparqlquery;
+    if (!isset($query_string)) {
+      $query_string = NULL;
+      $item = new Fedora_Item($pid);
+      if ($item->exists() && array_key_exists('QUERY', $item->datastreams)) {
+        $query_string = $item->get_datastream_dissemination('QUERY');
+      }
+      if ($query_string == NULL) {
+        $query_string = "SELECT ?object ?title ?content FROM <#ri> WHERE {
+                         <info:fedora/{$pid}> <fedora-rels-ext:hasResource> ?object .
+                         ?object <fedora-model:state> <fedora-model:Active>;
+                         <fedora-model:label> ?title;
+                         <fedora-model:hasModel> ?content;
+                         FILTER(!sameTerm(?content, <info:fedora/fedora-system:FedoraObject-3.0>) &&
+                                !sameTerm(?content, <info:fedora/si:resourceCModel>))
+                         }";
+     }
+    }
+    else {
+      // Replace %parent_collection% with the actual collection PID
+      $query_string = preg_replace("/\%parent_collection\%/", "<info:fedora/$pid>", $query_string);
+    }
+
+    $query_string = htmlentities(urlencode($query_string));
+
+    $content = '';
+    $url = variable_get('fedora_repository_url', 'http://localhost:8080/fedora/risearch');
+    $url .= "?type=tuples&flush=TRUE&format=Sparql&limit=$limit&offset=$offset&lang=Sparql&stream=on&query=" . $query_string;
     $content .= do_curl($url);
 
     return $content;

@@ -207,7 +207,6 @@ function fedora_repository_ingest_form_validate($form, &$form_state) {
     return;
   }
   if ($form_state['clicked_button']['#id'] == 'edit-submit' && $form_state['ahah_submission'] != 1) {
-    
     switch ($form_state['storage']['step']) {
       case 1:
         $form_state['storage']['step']++;

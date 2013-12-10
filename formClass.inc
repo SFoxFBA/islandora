@@ -610,7 +610,6 @@ class formClass {
     if (!$this->canShowIngestForm($collection_pid)) {
       return FALSE;
     }
-    watchdog("BBB5","cif set title:$collection_label");
     drupal_set_title($collection_label);
     if (module_exists('islandora_content_model_forms')) {
       module_load_include('inc', 'islandora_content_model_forms', 'IngestObjectMetadataForm');
