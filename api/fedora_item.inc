@@ -668,7 +668,6 @@ class Fedora_Item {
 
     return $relationships;
   }
-
   function get_models() {
     $relationships = array();
     try {
