@@ -606,7 +606,6 @@ class formClass {
    * @return array 
    */
   function createIngestForm($collection_pid, $collection_label, array &$form_state) {
-    watchdog("BBB5","cif:$collection_pid and $collection_label");
     if (!$this->canShowIngestForm($collection_pid)) {
       return FALSE;
     }
@@ -615,7 +614,6 @@ class formClass {
       module_load_include('inc', 'islandora_content_model_forms', 'IngestObjectMetadataForm');
       try {
         $form = new IngestObjectMetadataForm();
-        watchdog("BBB5","createIngestForm:$collection_pid and $collection_label");
         return $form->create($collection_pid, $collection_label, $form_state);
       } catch (Exception $e) {
         $form_state['storage']['xml'] = FALSE; // An error occured revert back to the QDC Form.

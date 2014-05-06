@@ -123,7 +123,6 @@ function fedora_repository_ingest_object($collection_pid=NULL, $collection_label
     drupal_set_message(t('You must specify a collection object pid to ingest an object.'), 'error');
     return '';
   }
-  watchdog("BBB3","islandora frio:$collection_pid, $collection_label, $content_model --");
   $output = drupal_get_form('fedora_repository_ingest_form', $collection_pid, $collection_label, $content_model);
 
   $breadcrumbs = array();
@@ -288,7 +287,6 @@ function fedora_repository_ingest_form(&$form_state, $collection_pid, $collectio
   $ingestForm = new formClass();
   $form_state['storage']['content_model'] = $content_model;
   $form_state['storage']['collection_pid'] = $collection_pid;
-  watchdog("BBB3","frif:".$collection_pid. " and $collection_label and $content_model");
   return $ingestForm->createIngestForm($collection_pid, $collection_label, $form_state);
 }
 
