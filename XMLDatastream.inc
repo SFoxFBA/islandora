@@ -21,7 +21,6 @@ abstract class XMLDatastream {
   private $valid = NULL;
   protected $forceSchema = FALSE; // if set, the datastream will be validated against the specified schema in self::$SCHEMA_URI instead of
   // reading the schema URI from the datastream.
-  // reading the schema URI from the datastream.
   public $pid;
   public $dsid;
 
@@ -228,7 +227,7 @@ abstract class XMLDatastream {
    * @return boolean $success
    */
   public function saveToFedora() {
-    module_load_include('inc', 'Fedora_Repository', 'api/fedora_item');
+    module_load_include('inc', 'fedora_repository', 'api/fedora_item');
     if ($this->validate()) {
       $item = new Fedora_Item($this->pid);
       $item->modify_datastream_by_value($this->dumpXml(), $this->dsid, $this->name, 'application/xml');
