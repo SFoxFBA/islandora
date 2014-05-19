@@ -1098,6 +1098,7 @@ RDF;
    *   The return value from the soap function if successful, NULL otherwise.
    */
   static function soap_call($function, $parameters, $quiet = FALSE) {
+    $quiet = TRUE; //NEVER SHOW TO USER
     if (!self::$connection_helper) {
       module_load_include('inc', 'fedora_repository', 'ConnectionHelper');
       self::$connection_helper = new ConnectionHelper();
