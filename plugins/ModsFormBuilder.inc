@@ -761,4 +761,220 @@ class ModsFormBuilder extends FormBuilder {
     return $mods;
   }
 
+  /**
+   * Handle Publish Form 
+   * @param &$form_id
+   * @param &$form_values
+   * @param &$soap_client
+   */
+  function handlePublishDatasetForm(&$form_id, &$form_values, &$soap_client) {
+    $dom = new DomDocument("1.0", "UTF-8");
+    $dom->formatOutput = TRUE;
+    $mods = $this->modsFromForm($form_values, $dom);
+    $dom->appendChild($mods);
+
+    if ($this->item->modify_datastream_by_value($dom->saveXML(), 'MODS', "MODS Record", 'text/xml') !== NULL) {
+      drupal_set_message(t('Successfully updated MODS datastream for object %pid', array('%pid' => $this->pid)));
+    }
+    drupal_goto('/fedora/repository/' . $this->pid);
+  }
+
+  /**
+   * @return array  
+   */
+  function buildPublishDatasetForm() {
+    $form['#multistep'] = TRUE; // used so that it triggers a form rebuild every time.
+    $form['indicator2'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Edit metadata'),
+    );
+
+    if ($this->cm !== FALSE && $this->item != NULL) {
+      $form['pid'] = array('#type' => 'hidden', '#value' => $this->pid);
+
+      $elements = $this->cm->getIngestFormElements();
+      $content = $this->item->get_datastream_dissemination('MODS');
+
+      if (trim($content) != '') {
+        $dom = DOMDocument::loadXML($content);
+        $xpath = new DOMXPath($dom);
+        // Register the php: namespace (required)
+        $xpath->registerNamespace("php", "http://php.net/xpath");
+
+        // Register PHP functions (no restrictions)
+        $xpath->registerPHPFunctions();
+
+        foreach ($elements as $element) {
+
+          $el = array(
+            '#title' => $element['label'],
+            '#required' => ($element['required'] ? 1 : 0),
+            '#description' => $element['description'],
+            '#type' => $element['type']
+          );
+
+          $includeEl = TRUE;
+          $elname = explode('][', $element['name']);
+          $elLocation = &$form['indicator2'];
+          while (isset($elLocation[$name[0]]) && ($partial = array_shift($elname)) != NULL) {
+            $elLocation = &$elLocation[$partial];
+          }
+
+          foreach ($element['parameters'] as $key => $val) {
+            switch ($key) {
+              case '#autocomplete_path':
+                $val .= '/' . $form_values['storage']['collection_pid'];
+                break;
+
+              case '#exclude_from_edit_metadata':
+                $includeEl = FALSE;
+                break;
+
+
+              case '#edit_metadata_xpath':
+                $nodeList = $xpath->evaluate($val);
+//  		echo $val. ' '.$nodeList->length.' ';
+// 		echo $nodeList->item(0)->nodeValue.' ';
+// 		echo '<br/>';
+
+                if (is_string($nodeList)) {
+                  $el['#default_value'] = $nodeList;
+                }
+                elseif ($nodeList->length > 1) {
+                  $el['#default_value'] = array();
+                  foreach ($nodeList as $node) {
+                    $el['#default_value'][] = $node->nodeValue;
+                  }
+                }
+                elseif ($nodeList->length > 0) {
+                  if ($el['#type'] == 'list') {
+                    $values = array();
+                    for ($i = 0; $i < $nodeList->length; $i++) {
+                      $values[] = $nodeList->item($i)->nodeValue;
+                    }
+                    $el['#default_value'] = join('; ', $values);
+                  }
+                  else {
+                    $el['#default_value'] = $nodeList->item(0)->nodeValue;
+                  }
+                }
+                break;
+            }
+
+            if ($key != '#sticky') {
+              $el[$key] = $val;
+            }
+          }
+
+          if ($element['type'] == 'people') {
+
+            $names = $xpath->evaluate('/mods:mods/mods:name');
+            $people = array();
+            foreach ($names as $mname) {
+
+              $type = $mname->getAttribute('type');
+              $role = $mname->getElementsByTagName('roleTerm')->item(0)->nodeValue;
+
+              $nameParts = $mname->getElementsByTagName('namePart');
+              foreach ($nameParts as $namePart) {
+                switch ($namePart->getAttribute('type')) {
+                  case 'given': $given = $namePart->nodeValue;
+                    break;
+                  case 'family': $family = $namePart->nodeValue;
+                    break;
+                  case 'termsOfAddress': $title = $namePart->nodeValue;
+                    break;
+                  case 'date': $date = $namePart->nodeValue;
+                    break;
+                  default: $name = $namePart->nodeValue;
+                    break;
+                }
+              }
+
+              $person = array('role' => $role);
+              switch ($type) {
+                case 'personal':
+                  if (isset($given) && isset($family) && !isset($name)) {
+                    $name = (isset($title) ? $title . ' ' : '') . $family . ', ' . $family;
+                  }
+                  $person['name'] = $name;
+                  $person['date'] = $date;
+                  break;
+                case 'organization':
+                  $person['organization'] = $name;
+                  break;
+                case 'conference':
+                  $person['conference'] = $name;
+                  $person['date'] = $date;
+                  break;
+              }
+              $people[] = $person;
+            }
+
+            $names = $xpath->evaluate('/mods:mods/mods:subject/mods:name');
+            foreach ($names as $mname) {
+
+              $type = $mname->getAttribute('type');
+
+              $nameParts = $mname->getElementsByTagName('namePart');
+              foreach ($nameParts as $namePart) {
+                switch ($namePart->getAttribute('type')) {
+                  case 'given': $given = $namePart->nodeValue;
+                    break;
+                  case 'family': $family = $namePart->nodeValue;
+                    break;
+                  case 'termsOfAddress': $title = $namePart->nodeValue;
+                    break;
+                  case 'date': $date = $namePart->nodeValue;
+                    break;
+                  default: $name = $namePart->nodeValue;
+                    break;
+                }
+              }
+
+              $person = array('subject' => 1);
+              switch ($type) {
+                case 'personal':
+                  if (isset($given) && isset($family) && !isset($name)) {
+                    $name = (isset($title) ? $title . ' ' : '') . $family . ', ' . $family;
+                  }
+                  $person['name'] = $name;
+                  $person['date'] = $date;
+                  break;
+                case 'organization':
+                  $person['organization'] = $name;
+                  break;
+                case 'conference':
+                  $person['conference'] = $name;
+                  $person['date'] = $date;
+                  break;
+              }
+              $people[] = $person;
+            }
+
+            $el['#default_value'] = $people;
+          }
+
+
+          if ($element['type'] == 'select' || $element['type'] == 'other_select') {
+            $el['#options'] = isset($element['authoritative_list']) ? $element['authoritative_list'] : array();
+          }
+
+          if ($includeEl) {
+            $elLocation[join('][', $elname)] = $el;
+          }
+        }
+
+        $form['submit'] = array(
+          '#type' => 'submit',
+          '#submit' => array('fedora_repository_edit_qdc_form_submit'),
+          '#value' => 'Save Metadata'
+        );
+
+        return $form;
+      }
+    }
+  }
+  
 }
+

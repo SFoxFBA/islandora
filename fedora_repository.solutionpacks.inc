@@ -194,17 +194,17 @@ function solution_pack_add_form($form_name, $form_xml) {
   }
 }
 
-function solution_pack_add_form_association($content_model, $form_name) {
-  $result = db_result(db_query('Select content_model from {islandora_content_model_forms} where  content_model = "%s" and form_name = "%s"',
-              $content_model, $form_name));
+//SFOX added dsid, title field, and transform as parameters
+function solution_pack_add_form_association($content_model, $form_name, $dsid = 'MODS', $title_field = "['titleInfo']['title']", $transform = 'mods_to_dc.xsl') {
+  $result = db_result(db_query('Select content_model from {islandora_content_model_forms} where  content_model = "%s" and form_name = "%s"', $content_model, $form_name));
   if (!$result) {
     $object = new stdClass();
     $object->content_model = $content_model;
     $object->form_name = $form_name;
-    $object->dsid = 'MODS';
-    $object->title_field = "['titleInfo']['title']";
-    $object->transform = 'mods_to_dc.xsl';
+    $object->dsid = $dsid;
+    $object->title_field = $title_field;
+    $object->transform = $transform;
     $result = drupal_write_record('islandora_content_model_forms', $object);
-    drupal_set_message(t("Added association between @cm and @name", array("@cm" => $content_model, "@name"=>$form_name)));
+    drupal_set_message(t("Added association between @cm and @name", array("@cm" => $content_model, "@name" => $form_name)));
   }
 }
