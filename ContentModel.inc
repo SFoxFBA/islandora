@@ -40,6 +40,7 @@ class ContentModel extends XMLDatastream {
    */
   public static function loadFromObject($pid) {
     $ret = FALSE;
+
     if (self::valid_pid($pid)) {
       module_load_include('inc', 'fedora_repository', 'ObjectHelper');
       $objectHelper = new ObjectHelper();
@@ -47,8 +48,10 @@ class ContentModel extends XMLDatastream {
       $content_models = $objectHelper->get_content_models_list($pid);
       foreach ($content_models as $content_model) {
         if ($content_model != 'fedora-system:FedoraObject-3.0') {
-          $ret = $content_model;
-          break;
+          if (strcmp($content_model->pid, "si:conceptCModel") !== 0) { //SFOX horrible hack, to return fba content model pid
+            $ret = $content_model;
+            break;
+          }
         }
       }
     }
@@ -212,7 +215,8 @@ class ContentModel extends XMLDatastream {
           $ret = new ContentModel($ds, $pid, $dsid, $pid_namespace, $name);
         }
       }
-    } catch (SOAPException $e) {
+    }
+    catch (SOAPException $e) {
       $ret = FALSE;
     }
     return $ret;

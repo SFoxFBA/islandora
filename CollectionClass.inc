@@ -5,7 +5,7 @@
  * 
  * Collection Class Class
  */
- 
+
 /**
  * This CLASS caches the streams so once you call a getstream once it will always return
  * the same stream as long as you are using the instance of this class. Cached to
@@ -34,7 +34,7 @@ class CollectionClass {
       $this->pid = $pid;
     }
   }
-  
+
   public static function getCollectionQuery($pid) {
     if ($query = self::getCollectionQueryFromStream($pid)) {
       return $query;
@@ -43,7 +43,7 @@ class CollectionClass {
       return self::getDefaultCollectionQuery($pid);
     }
   }
-  
+
   protected static function getCollectionQueryFromStream($pid) {
     module_load_include('inc', 'fedora_repository', 'api/fedora_item');
     $item = new Fedora_Item($pid);
@@ -54,7 +54,7 @@ class CollectionClass {
       return FALSE;
     }
   }
-  
+
   protected static function getDefaultCollectionQuery($pid) {
     return 'select $object $title $content from <#ri>
              where ($object <fedora-model:label> $title
@@ -79,11 +79,11 @@ class CollectionClass {
    * @param type $itqlquery
    * @return type 
    */
-  function getRelatedObjects($pid, $limit, $offset, $itqlquery=NULL) {
+  function getRelatedObjects($pid, $limit, $offset, $itqlquery = NULL) {
     return $this->getRelatedItems($pid, $itqlquery, $limit, $offset);
   }
 
-   /**
+  /**
    * gets objects related to this object.  must include offset and limit
    * calls getRelatedItems but enforces limit and offset
    * @param type $pid
@@ -92,7 +92,7 @@ class CollectionClass {
    * @param type $sparqlquery
    * @return type
    */
-  function getRelatedObjectsBySparql($pid, $limit, $offset, $sparqlquery=NULL) {
+  function getRelatedObjectsBySparql($pid, $limit, $offset, $sparqlquery = NULL) {
     if (!isset($sparqlquery)) {
       module_load_include('inc', 'fedora_repository', 'api/fedora_item');
       $item = new Fedora_Item($pid);
@@ -139,15 +139,15 @@ class CollectionClass {
         $query_string = $item->get_datastream_dissemination('QUERY');
       }
       if ($query_string == NULL) {
-       /* $query_string = 'select $object $title $content from <#ri>
-                             where ($object <fedora-model:label> $title
-                             and $object <fedora-model:hasModel> $content
-                             and ($object <fedora-rels-ext:isMemberOfCollection> <info:fedora/' . $pid . '>
-                             or $object <fedora-rels-ext:isMemberOf> <info:fedora/' . $pid . '>)
-                             and $object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>)
-                             minus $content <mulgara:is> <info:fedora/fedora-system:FedoraObject-3.0>
-                             order by $title';
-       */
+        /* $query_string = 'select $object $title $content from <#ri>
+          where ($object <fedora-model:label> $title
+          and $object <fedora-model:hasModel> $content
+          and ($object <fedora-rels-ext:isMemberOfCollection> <info:fedora/' . $pid . '>
+          or $object <fedora-rels-ext:isMemberOf> <info:fedora/' . $pid . '>)
+          and $object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>)
+          minus $content <mulgara:is> <info:fedora/fedora-system:FedoraObject-3.0>
+          order by $title';
+         */
         $query_string = 'select $object $title $content from <#ri>
                              where ($object <fedora-model:label> $title
                              and $object <fedora-model:hasModel> $content
@@ -167,7 +167,7 @@ class CollectionClass {
     $query_string = preg_replace("/\%parent_collection\%/", "<info:fedora/$pid>", $query_string);
 
     $url = variable_get('fedora_repository_url', 'http://localhost:8080/fedora/risearch');
-    
+
     $settings = array(
       'type' => 'tuples',
       'flush' => TRUE,
@@ -183,14 +183,14 @@ class CollectionClass {
     if ($offset > 0) {
       $settings['offset'] = $offset;
     }
-    
+
     $url .= '?' . http_build_query($settings, NULL, '&');
     $content = do_curl($url);
     return $content;
   }
 
 
-   /**
+  /**
    * Gets objects related to this item.  It will query the object for a Query stream and use that as a itql query
    * or if there is no query stream it will use the default.  If you pass a query to this method it will use the passed in query no matter what
    * @global type $user
@@ -220,15 +220,29 @@ class CollectionClass {
         $query_string = $item->get_datastream_dissemination('QUERY');
       }
       if ($query_string == NULL) {
-        $query_string = "SELECT ?object ?title ?content FROM <#ri> WHERE {
-                         <info:fedora/{$pid}> <fedora-rels-ext:hasResource> ?object .
-                         ?object <fedora-model:state> <fedora-model:Active>;
+
+        $query_string = "SELECT ?object ?title ?content FROM <#ri> WHERE {";
+        //
+        //SFOX hasResource has been replaced by individual class (resource) RDFs
+        $resourcerdfs = sidora_return_forward_fba_resource_rdfs();
+        $arraycount = count($resourcerdfs);
+        foreach ($resourcerdfs as $key => $keyvalue) {
+          $query_string .= "<info:fedora/{$pid}> <fedora-rels-ext:" . $keyvalue . "> ?object";
+          if ($key < $arraycount - 1) { //as arraycounts don't start at zero
+            $query_string .= ' or ';
+          }
+          else {
+            $query_string .= ') ';
+          }
+        }
+
+        $query_string .= ". ?object <fedora-model:state> <fedora-model:Active>;
                          <fedora-model:label> ?title;
                          <fedora-model:hasModel> ?content;
                          FILTER(!sameTerm(?content, <info:fedora/fedora-system:FedoraObject-3.0>) &&
                                 !sameTerm(?content, <info:fedora/si:resourceCModel>))
                          }";
-     }
+      }
     }
     else {
       // Replace %parent_collection% with the actual collection PID
@@ -267,7 +281,8 @@ class CollectionClass {
     $stream = $this->getCollectionPolicyStream($collection_pid);
     try {
       $xml = new SimpleXMLElement($stream);
-    } catch (Exception $e) {
+    }
+    catch (Exception $e) {
       drupal_set_message(t('Error getting relationship element from policy stream @e', array('@e' => check_plain($e->getMessage()))), 'error');
       return;
     }
@@ -308,7 +323,8 @@ class CollectionClass {
     $stream = $this->getCollectionPolicyStream($pid);
     try {
       $xml = new SimpleXMLElement($stream);
-    } catch (Exception $e) {
+    }
+    catch (Exception $e) {
       drupal_set_message(t('Error getting PID namespace @e', array('@e' => check_plain($e->getMessage()))), 'error');
       return;
     }
@@ -334,7 +350,8 @@ class CollectionClass {
     $collection_stream = $this->getCollectionPolicyStream($collection_pid);
     try {
       $xml = new SimpleXMLElement($collection_stream);
-    } catch (Exception $e) {
+    }
+    catch (Exception $e) {
       if ($showError) {
         drupal_set_message(t('@e', array('@e' => check_plain($e->getMessage()))), 'error');
       }
@@ -375,7 +392,8 @@ class CollectionClass {
     $stream = $this->getContentModelStream($pid, $dsid);
     try {
       $xml = new SimpleXMLElement($stream);
-    } catch (Exception $e) {
+    }
+    catch (Exception $e) {
       drupal_set_message(t('Error Getting FormHandler: @e', array('@e' => check_plain($e->getMessage()))), 'error');
       return NULL;
     }
@@ -408,7 +426,8 @@ class CollectionClass {
     $stream = $this->getContentModelStream($contentModelPid, $contentModel_dsid);
     try {
       $xml = new SimpleXMLElement($stream);
-    } catch (Exception $e) {
+    }
+    catch (Exception $e) {
       drupal_set_message(t('Error getting content model stream for mime types @e', array('@e' => check_plain($e->getMessage()))), 'error');
       return;
     }
@@ -438,7 +457,8 @@ class CollectionClass {
 
     try {
       $xml = new SimpleXMLElement($stream);
-    } catch (Exception $e) {
+    }
+    catch (Exception $e) {
       drupal_set_message(t('Error getting content model stream @e', array('@e' => check_plain($e->getMessage()))), 'error');
       return FALSE;
     }
@@ -501,7 +521,8 @@ class CollectionClass {
     $stream = $this->getContentModelStream($contentModelPid, $contentModelDsid);
     try {
       $xml = new SimpleXMLElement($stream);
-    } catch (Exception $e) {
+    }
+    catch (Exception $e) {
       drupal_set_message(t('Error getting ingest form stream @e', array('@e' => check_plain($e->getMessage()))), 'error');
       return FALSE;
     }
@@ -586,8 +607,9 @@ class CollectionClass {
       );
       $object = $soapClient->__soapCall('getNextPID', array(
         $params
-          ));
-    } catch (exception $e) {
+      ));
+    }
+    catch (exception $e) {
       drupal_set_message(t('Error getting Next PID: @e', array('@e' => check_plain($e->getMessage()))), 'error');
       return FALSE;
     }
@@ -620,12 +642,12 @@ class CollectionClass {
     module_load_include('inc', 'fedora_repository', 'CollectionClass');
     $collectionClass = new CollectionClass();
     $xslContent = $collectionClass->getCollectionViewStream($pid);
-    
+
     //If there's no XSLT from the object, then check if the one which used to exist, does...
-    if (!$xslContent && $canUseDefault && file_exists($path . '/xsl/sparql_to_html.xsl')) { 
+    if (!$xslContent && $canUseDefault && file_exists($path . '/xsl/sparql_to_html.xsl')) {
       $xslContent = file_get_contents($path . '/xsl/sparql_to_html.xsl');
     }
-    
+
     return $xslContent;
   }
 
@@ -642,7 +664,7 @@ class CollectionClass {
     //module_load_include('inc', 'fedora_repository', 'BatchIngest'); //Legacy code?
     global $base_url;
     global $user;
-    
+
     $tabset = array();
     $query = NULL;
     $item = new Fedora_Item($this->pid);
@@ -662,7 +684,7 @@ class CollectionClass {
     if (count($content_models) == 1 && $content_models[0]->pid == "islandora:collectionCModel") {
       $show_batch_tab = FALSE;
     }
-    
+
     // Check the form post to see if we are in the middle of an ingest operation.
     $add_selected = ((!empty($_POST['form_id']) && $_POST['form_id'] == 'fedora_repository_ingest_form') || !$collection_items);
     $view_selected = !$add_selected;
@@ -674,7 +696,7 @@ class CollectionClass {
       '#content' => $collection_items,
       '#tab_name' => 'view-tab',
     );
-    
+
     $add_to_collection = $this->getIngestInterface();
     if (!empty($add_to_collection)) {
       $tabset['add_tab'] = array(
@@ -751,11 +773,11 @@ class CollectionClass {
    */
   protected static function hackPager($pager_name, $per_page = NULL, $total_items = NULL) {
     global $pager_total, $pager_page_array;
-    
+
     if ($per_page !== NULL && $total_items !== NULL) {
       $pager_total[$pager_name] = ceil($total_items / $per_page);
     }
-    
+
     //XXX: Don't know that this is neccessary, to try to load all the time, or
     //  whether Drupal will load it automatically somewhere...  Docs seems a
     //  a little sparse.
@@ -764,18 +786,18 @@ class CollectionClass {
     if ($page < 0) {
       $page = 0;
     }
-    
+
     if (!isset($pager_page_array)) {
       $pager_page_array = pager_load_array($page, $pager_name, $page_info);
     }
     else {
       $pager_page_array = pager_load_array($page, $pager_name, $pager_page_array);
     }
-    
+
     $page = $pager_page_array[$pager_name];
     return $page;
   }
-  
+
   /**
    * render collection
    * @global type $base_url
@@ -791,9 +813,9 @@ class CollectionClass {
     global $base_url;
     $collection_pid = $pid; //we will be changing the pid later maybe
     $parsedContent = NULL;
-    if(!isset($this->collectionObject)){
+    if (!isset($this->collectionObject)) {
       $this->collectionObject = new ObjectHelper($pid);
-    } 
+    }
     $contentModels = $this->collectionObject->get_content_models_list($pid);
     $isCollection = FALSE;
     //if this is a collection object store the $pid in the session as it will come in handy
@@ -804,7 +826,7 @@ class CollectionClass {
     if (empty($collectionName)) {
       $collectionName = menu_get_active_title();
     }
-    
+
     $xslContent = $this->getXslContent($pid, $path);
 
     $objectList = '';
@@ -812,7 +834,7 @@ class CollectionClass {
       if (!$xslContent) { //Didn't find an XSLT.
         $intermediate_results = ObjectHelper::parse_sparql_results($content);
         unset($content);
-        
+
         $per_page = 20; //XXX:  Make this configurable.
         $pager_name = 0;
         $total = count($intermediate_results);
@@ -837,9 +859,9 @@ class CollectionClass {
         }
         else {
           $first = $per_page * $pager_page;
-          $last = (($total - $first) > $per_page)?
-            ($first + $per_page):
-            $total;
+          $last = (($total - $first) > $per_page) ?
+              ($first + $per_page) :
+              $total;
           $results_range_text = t('Results @first to @last of @total', array(
             '@first' => $first + 1,
             '@last' => $last,
@@ -857,7 +879,7 @@ class CollectionClass {
         if (!$pageNumber) {
           $pageNumber = 1;
         }
-        
+
         //get collection list and display using xslt-------------------------------------------
         $input = new DomDocument();
         $input->loadXML(trim($content));
@@ -865,14 +887,14 @@ class CollectionClass {
         if ($results->length > 0) {
           try {
             $proc = new XsltProcessor();
-            $options = array( //Could make this the return of a hook?  
+            $options = array(//Could make this the return of a hook?  
               'collectionPid' => $collection_pid,
               'collectionTitle' => $collectionName,
               'baseUrl' => $base_url,
               'path' => "$base_url/$path",
               'hitPage' => $pageNumber,
             );
-            
+
             $proc->setParameter('', $options);
 
             $proc->registerPHPFunctions();
@@ -890,7 +912,8 @@ class CollectionClass {
             if (!$objectList) {
               throw new Exception("Invalid XML.");
             }
-          } catch (Exception $e) {
+          }
+          catch (Exception $e) {
             drupal_set_message(check_plain($e->getMessage()), 'error');
             return '';
           }
@@ -904,4 +927,3 @@ class CollectionClass {
   }
 
 }
-

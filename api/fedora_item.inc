@@ -7,6 +7,8 @@
 define('RELS_EXT_URI', 'info:fedora/fedora-system:def/relations-external#');
 define("FEDORA_MODEL_URI", 'info:fedora/fedora-system:def/model#');
 define("ISLANDORA_PAGE_URI", 'info:islandora/islandora-system:def/pageinfo#');
+define("FOAF_URI", 'http://xmlns.com/foaf/spec/'); //FBA MODIFICATION BY NBYWELL 10/04/2013
+define("FBA_URI", 'http://fba.org.uk/schemas/fba/fba_rdf/1.0.0/'); //FBA MODIFICATION BY NBYWELL 21/05/2013
 define("ISLANDORA_RELS_EXT_URI", 'http://islandora.ca/ontology/relsext#');
 define("ISLANDORA_RELS_INT_URI", "http://islandora.ca/ontology/relsint#");
 
@@ -21,9 +23,11 @@ define("RELS_TYPE_DATETIME", 4);
  */
 class Fedora_Item {
 
-  public $pid = NULL; // The $pid of the fedora object represented by an instance of this class.
+  // The $pid of the fedora object represented by an instance of this class.
+  public $pid = NULL;
   public $objectProfile = NULL;
-  private $datastreams_list = NULL; // A SimpleXML object to store a list of this item's datastreams
+  // A SimpleXML object to store a list of this item's datastreams.
+  private $datastreams_list = NULL;
   public $datastreams = NULL;
   private static $connection_helper = NULL;
   private static $instantiated_pids = array();
@@ -617,7 +621,6 @@ RDF;
       'pid' => $this->pid,
       'asOfDateTime' => ""
     );
-
     $this->datastreams_list = $this->soap_call('listDataStreams', $params);
     //}
     return $this->datastreams_list;
@@ -671,6 +674,7 @@ RDF;
   function get_datastreams_list_as_array() {
     $this->get_datastreams_list_as_SimpleXML();
     $ds_list = array();
+    
     if ($this->datastreams_list != FALSE) {
 
       // This is a really annoying edge case: if there is only one
@@ -691,7 +695,6 @@ RDF;
         $ds_list[$ds->ID]['URL'] = $this->url() . '/' . $ds->ID . '/' . drupal_urlencode($ds->label);
       }
     }
-
     return $ds_list;
   }
 
@@ -749,8 +752,28 @@ RDF;
     return $relationships;
   }
 
-  function get_rdf_relationships() {
-
+  /**
+   * Retrieves RELS-EXT values from item
+   *
+   * @param array $namespaces
+   *
+   * @return array
+   */
+  function get_rdf_relationships($namespaces = null) {
+    if ($namespaces == NULL) {
+      $namespaces = array(
+        RELS_EXT_URI,
+        FEDORA_MODEL_URI,
+        FOAF_URI, /* FBA MODIFICATION BY NBYWELL 10/04/2013 */
+        FBA_URI,  /* FBA MODIFICATION BY NBYWELL 21/05/2013 */
+        ISLANDORA_PAGE_URI,
+        ISLANDORA_RELS_EXT_URI,
+        ISLANDORA_RELS_INT_URI,
+      );
+    }
+    if (!is_array($namespaces)) {
+      $namespaces = array($namespaces);
+    }
     $relationships = array();
     try {
       $relsext = $this->get_datastream_dissemination('RELS-EXT');
@@ -764,13 +787,16 @@ RDF;
     $relsextxml->loadXML($relsext);
     $relsextxml->normalizeDocument();
     $allTags = array();
-    $allTags[] = $relsextxml->getElementsByTagNameNS(RELS_EXT_URI, '*');
-    $allTags[] = $relsextxml->getElementsByTagNameNS(FEDORA_MODEL_URI, '*');
-    $allTags[] = $relsextxml->getElementsByTagNameNS(ISLANDORA_PAGE_URI, '*');
+    foreach ($namespaces as $namespace) {
+      $allTags[] = $relsextxml->getElementsByTagNameNS($namespace, '*');
+    }
+
     foreach ($allTags as $tags) {
       foreach ($tags as $child) {
-        $value = preg_replace('/info:fedora\//','',$child->getAttributeNS('http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'resource'));
-        
+        $value = preg_replace('/info:fedora\//', '', $child->getAttributeNS('http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'resource'));
+        if (!$value) {
+          $value = $child->textContent;
+        }
         $relationships[$child->tagName][] = $value;
       }
     }
@@ -1136,15 +1162,16 @@ RDF;
    *   The return value from the soap function if successful, NULL otherwise.
    */
   static function soap_call($function, $parameters, $quiet = FALSE) {
+    module_load_include('inc', 'fedora_repository', 'ObjectHelper');
     if (!self::$connection_helper) {
       module_load_include('inc', 'fedora_repository', 'ConnectionHelper');
       self::$connection_helper = new ConnectionHelper();
     }
     $url = (
-      in_array($function, self::$SoapManagedFunctions)?
-        variable_get('fedora_soap_manage_url', 'http://localhost:8080/fedora/wsdl?api=API-M') :
-        variable_get('fedora_soap_url', 'http://localhost:8080/fedora/services/access?wsdl')
-    );
+        in_array($function, self::$SoapManagedFunctions) ?
+            variable_get('fedora_soap_manage_url', 'http://localhost:8080/fedora/wsdl?api=API-M') :
+            variable_get('fedora_soap_url', 'http://localhost:8080/fedora/services/access?wsdl')
+        );
     try {
       $soap_client = self::$connection_helper->getSoapClient($url);
       if (isset($soap_client)) {
@@ -1158,7 +1185,7 @@ RDF;
         return NULL;
       }
     } catch (Exception $e) {
-      if (!$quiet) {
+      if (!$quiet && user_access($VIEW_FEDORA_SOAP_ERROR_MESSAGES)) {
         preg_match('/org\.fcrepo\.server\.security\.xacml\.pep\.AuthzDeniedException/', $e->getMessage()) ?
                 drupal_set_message(t('Insufficient permissions to call SOAP function "%func".', array('%func' => $function)), 'error') :
                 drupal_set_message(t('Error trying to call SOAP function "%func". Check watchdog logs for more information.', array('%func' => $function)), 'error');

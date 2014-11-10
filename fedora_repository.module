@@ -533,29 +533,12 @@ function fedora_repository_purge_object_form_submit($form, &$form_state) {
        * FBA MODIFICATION BY NBYWELL on 06/03/2014 to remove any link-data
        * that was created by the Object Linker functionality. This could
        * be RDFs and entries in the datastreams of linked-to objects.
+       * Fidora purge processing happens in the islandora_content_model_
+       * viewer.module but this has been updated incase the functionality
+       * is ever changed so that it does use this function.
        */
       module_load_include('inc', 'islandora_content_model_forms', 'ObjectLinker');
-      if (variable_get('rdf_relationships', NULL)) {
-        // An unrelated rdf_relationships variable
-        // is present that should be unset. This can happen
-        // when a user loads up an XML-form but never clicks
-        // on the submit button.
-        variable_set('rdf_relationships', NULL);
-      }
-      $content_model_pid = get_object_linker_content_model($pid);
-      if (strlen($content_model_pid) > 0) {
-        $object_linker_form_name = get_object_linker_form_name($pid, $content_model_pid);
-        if (strlen($object_linker_form_name) > 0) {
-          // Build the form so that any link info
-          // is stored in the rdf_relationships
-          // variable.
-          build_object_linker_form($object_linker_form_name);
-          if (variable_get('rdf_relationships', NULL)) {
-            process_links_on_purge($pid);
-            variable_set('rdf_relationships', NULL);
-          }
-        }
-      }
+      process_links_on_purge($pid);
 
       $object = $client->__soapCall('purgeObject', array($params));
       unset($form_state['storage']['confirm']);
