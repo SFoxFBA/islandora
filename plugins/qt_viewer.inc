@@ -167,7 +167,7 @@ class ShowQtStreamsInFieldSets {
         '#value' => l(t('Download Media File'), "fedora/repository/{$this->pid}/OBJ/MOV.mov", array('attributes' => array('class' => 'download'))),
       );
     }
-    $src = url("fedora/repository/{$this->pid}/{$media->ID}/MOV.mov";
+    $src = url("fedora/repository/{$this->pid}/{$media->ID}/MOV.mov");
     
     $qtparams = "'autostart', '" . ($pframe !== FALSE ? 'TRUE' : 'FALSE') . "', ";
     $init = <<<EOD

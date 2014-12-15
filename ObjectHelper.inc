@@ -181,7 +181,10 @@ class ObjectHelper {
         
         if ($curl_stat !== FALSE) {
           $info = curl_getinfo($ch);
-          
+          // Fixes an IE issue (ISLANDORA-311)
+          // http://support.microsoft.com/kb/316431 
+          drupal_set_header("Cache-Control: private", TRUE); 
+
           //Set what headers we can...
           if ($mimeType = $info['content_type']) {
             drupal_set_header("Content-Type: $mimeType");
@@ -810,6 +813,7 @@ class ObjectHelper {
    * Get a tree of related pids - for the basket functionality
    *
    * FIXME:  This doesn't actually get a tree...
+   * XXX: Is this still required, without basket being in?
    *
    * @param type $pid
    * @return type 

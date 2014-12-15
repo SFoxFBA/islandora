@@ -2,23 +2,35 @@
 
 /**
  * @file
- * Invokes a hook to any dependent modules asking them if their installations require
- * any fedora objects to be present. Modules implementing this hook should return an array
+ * Invokes a hook to any dependent modules asking them if their
+ * installations require any fedora objects to be present.
+ * Modules implementing this hook should return an array
  * of arrays of the form:
  *
- * array( 'pid', 'path-to-foxml-file', 'dsid', 'path-to-datastream-file', int dsversion)
+ * array( 'pid', 'path-to-foxml-file',
+ *   'dsid',
+ *   'path-to-datastream-file',
+ *   int dsversion)
  *
- * where the last three options are optional. A module can either point to a simple
- * foxml file to install, or can specify a datastreamstream to check for, with a
- * path to load the datastream from if it isn't there. Optionally a version number
- * can be included, to enable updating of content model or collection policy streams
- * that may have been updated. THis is a simple whole number that should be incremented
- * when changed.  This value appears in as an attribute of the topmost element of the stream,
+ * where the last three options are optional.
+ * A module can either point to a simple foxml file to install,
+ * or can specify a datastreamstream to check for, with a
+ * path to load the datastream from if it isn't there.
+ * Optionally a version number can be included,
+ * to enable updating of content model or collection policy streams
+ * that may have been updated.
+ * This is a simple whole number that should be incremented when changed.
+ * This value appears in as an attribute of the topmost element of the stream,
  * e.g.,:
  *
- * <?xml version="1.0" encoding="utf-8"?> <content_model name="Collection" version="2" ...
+ * <?xml version="1.0" encoding="utf-8"?>
+ * <content_model name="Collection" version="2" ...
  *
  * Datastreams which don't have this element are assumed to be at version 0.
+ */
+
+/**
+ * Builds the tab for the solution packs.
  */
 function fedora_repository_solution_packs_page() {
   $enabled_solution_packs = module_invoke_all('required_fedora_objects');
@@ -46,14 +58,14 @@ function fedora_repository_solution_packs_page() {
  * @param array $solution_pack
  */
 function fedora_repository_solution_pack_form(&$form_state, $solution_pack_module, $solution_pack_name, $objects = array()) {
-    
+
   // Check each object to see if it is in the repository.
   module_load_include('inc', 'fedora_repository', 'api/fedora_item');
   global $base_path;
   $needs_update = FALSE;
   $needs_install = FALSE;
   $form = array();
-  
+
   $form['solution_pack_module'] = array(
     '#type' => 'hidden',
     '#value' => $solution_pack_module,
@@ -161,8 +173,16 @@ function fedora_repository_solution_pack_form(&$form_state, $solution_pack_modul
   return $form;
 }
 
+/**
+ * Submit handler for solution pack form.
+ *
+ * @param array $form
+ *   The form submitted.
+ * @param array_reference $form_state
+ *   The state of the form submited.
+ */
 function fedora_repository_solution_pack_form_submit($form, &$form_state) {
-  $what = $form_state;
+
   $module_name = $form_state['values']['solution_pack_module'];
 
   // This should be replaced with module_invoke
@@ -183,6 +203,14 @@ function fedora_repository_solution_pack_form_submit($form, &$form_state) {
   batch_set($batch);
 }
 
+/**
+ * Writes a form entry into the database.
+ *
+ * @param string $form_name
+ *   The name of the form.
+ * @param unknown_type $form_xml
+ *   The form definition.
+ */
 function solution_pack_add_form($form_name, $form_xml) {
   $result = db_result(db_query('Select name from {xml_forms} where name = "%s"', $form_name));
   if (!$result) {

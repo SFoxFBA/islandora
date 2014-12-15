@@ -102,6 +102,7 @@ class CollectionClass {
     }
     return $this->getRelatedItemsBySparql($pid, $sparqlquery, $limit, $offset);
   }
+
   /**
    * Gets objects related to this item.
    *
@@ -155,7 +156,6 @@ class CollectionClass {
                              and $object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>)
                              minus $content <mulgara:is> <info:fedora/fedora-system:FedoraObject-3.0>
                              order by $title';
-
       }
     }
     else {
@@ -188,7 +188,6 @@ class CollectionClass {
     $content = do_curl($url);
     return $content;
   }
-
 
   /**
    * Gets objects related to this item.  It will query the object for a Query stream and use that as a itql query

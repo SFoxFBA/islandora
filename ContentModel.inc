@@ -1,11 +1,11 @@
 <?php
 
 /**
- * @file 
- * 
+ * @file
+ *
  */
 /**
- * @file 
+ * @file
  * Content Model Class
  */
 module_load_include('inc', 'fedora_repository', 'XMLDatastream');
@@ -40,7 +40,6 @@ class ContentModel extends XMLDatastream {
    */
   public static function loadFromObject($pid) {
     $ret = FALSE;
-
     if (self::valid_pid($pid)) {
       module_load_include('inc', 'fedora_repository', 'ObjectHelper');
       $objectHelper = new ObjectHelper();
@@ -59,7 +58,7 @@ class ContentModel extends XMLDatastream {
   }
 
   /**
-   * Ingests a Content Model from a file to the specified pid/dsid . 
+   * Ingests a Content Model from a file to the specified pid/dsid .
    * Returns FALSE on failure.
    *
    * @param string $pid
@@ -86,7 +85,7 @@ class ContentModel extends XMLDatastream {
   }
 
   /**
-   * Ingests a Content Model from an existing model to the specified pid/dsid . 
+   * Ingests a Content Model from an existing model to the specified pid/dsid .
    * Returns FALSE on failure.
    *
    * @param string $pid
@@ -115,7 +114,7 @@ class ContentModel extends XMLDatastream {
   }
 
   /**
-   * Ingests a minimum Content Model to the specified pid/dsid. 
+   * Ingests a minimum Content Model to the specified pid/dsid.
    * Returns FALSE on failure.
    *
    * @param string $pid
@@ -215,8 +214,7 @@ class ContentModel extends XMLDatastream {
           $ret = new ContentModel($ds, $pid, $dsid, $pid_namespace, $name);
         }
       }
-    }
-    catch (SOAPException $e) {
+    } catch (SOAPException $e) {
       $ret = FALSE;
     }
     return $ret;
@@ -519,7 +517,7 @@ class ContentModel extends XMLDatastream {
    * in the form builder if more complex forms or behaviour is required.
    * Each element has the following keys: 'label', 'type', 'required', 'description', and if defined, 'authoritative_list' and/or 'parameters'
    *
-   * @return string[] $elements 
+   * @return string[] $elements
    */
   public function getIngestFormElements() {
     $ret = FALSE;
@@ -579,14 +577,14 @@ class ContentModel extends XMLDatastream {
   }
 
   /**
-   * Decrements an ingest form element in the list of elements.  
+   * Decrements an ingest form element in the list of elements.
    * Updates the "order".  This method is simply an overload to the incIngestFormElement
    * which has a direction parameter.
    *
-   * TODO: Might be useful to move multiple places at once, or define 
-   * a method to move to an absolute position.  
+   * TODO: Might be useful to move multiple places at once, or define
+   * a method to move to an absolute position.
    *
-   * @param String $name 
+   * @param String $name
    * @return boolean $success
    */
   public function decIngestFormElement($name) {
@@ -594,14 +592,14 @@ class ContentModel extends XMLDatastream {
   }
 
   /**
-   * Increments (or decrements) ingest form element in the list of elements.  
+   * Increments (or decrements) ingest form element in the list of elements.
    * Updates the "order".  The $reorder parameter accepts 'inc' or 'dec' to
    * specify the direction to move (defaults to increment.)
    *
-   * TODO: Might be useful to move multiple places at once, or define 
-   * a method to move to an absolute position.  
+   * TODO: Might be useful to move multiple places at once, or define
+   * a method to move to an absolute position.
    *
-   * @param String $name 
+   * @param String $name
    * @param String $reorder
    * @return boolean $success
    */
@@ -662,7 +660,7 @@ class ContentModel extends XMLDatastream {
   /**
    * Sets a parameter of an ingest form element.  If the value of the element is FALSE the parameter
    * will be removed entirely (if you want to store FALSE as a value, then send the String "FALSE").
-   * 
+   *
    * @param String $elementName
    * @param String $paramName
    * @param String $paramValue
@@ -733,7 +731,7 @@ class ContentModel extends XMLDatastream {
 
   /**
    * Gets a list of all parameters that belong to the specified ingest form element.
-   * 
+   *
    * @param String $elementName
    * @return boolean success
    */
@@ -766,7 +764,7 @@ class ContentModel extends XMLDatastream {
   }
 
   /**
-   * Edits the ingest form element specified. 
+   * Edits the ingest form element specified.
    * NOTE: The element name can not be changed.  To update an elements name
    * it must be deleted and added with the new name.
    *
@@ -858,12 +856,12 @@ class ContentModel extends XMLDatastream {
   }
 
   /**
-   * Decrements an authority list item from a form element in the list of elements.  
+   * Decrements an authority list item from a form element in the list of elements.
    * Updates the "order".  This method is simply an overload to the incAuthListItem
    * which has a direction parameter.
 
    *
-   * @param String $elementName 
+   * @param String $elementName
    * @param String $value
    * @return boolean $success
    */
@@ -872,10 +870,10 @@ class ContentModel extends XMLDatastream {
   }
 
   /**
-   * Increments (or decrements) an authority list item from a form element in the list of elements.  
-   * Updates the "order".  
+   * Increments (or decrements) an authority list item from a form element in the list of elements.
+   * Updates the "order".
    *
-   * @param String $elementName 
+   * @param String $elementName
    * @param String $value
    * @param String $direction
    * @return boolean $success
@@ -925,7 +923,7 @@ class ContentModel extends XMLDatastream {
   }
 
   /**
-   * Removes an authority list item from a form element.  
+   * Removes an authority list item from a form element.
    * @param String $elementName
    * @param String $value
    * @return boolean $success
@@ -970,7 +968,7 @@ class ContentModel extends XMLDatastream {
   }
 
   /**
-   * Adds an authority list item to a form element.  
+   * Adds an authority list item to a form element.
    * @param String $elementName
    * @param String $value
    * @param String $label (optional)
@@ -1069,32 +1067,36 @@ class ContentModel extends XMLDatastream {
         if (strtolower($ingest_form->getAttribute('hide_file_chooser')) == 'TRUE') {
           $form['indicator']['ingest-file-location']['#type'] = 'hidden';
         }
-      }
-      $dsid = $ingest_form->getAttribute('dsid');
 
-      $method = $ingest_form->getElementsByTagName('form_builder_method')->item(0);
-      $module = $method->getAttribute('module');
-      $path = drupal_get_path('module', !empty($module) ? $module : 'fedora_repository') . '/' . $method->getAttribute('file');
-      if (!file_exists($path)) {
-        self::$errors[] = 'Build Ingest Form: file \'' . $path . '\' does not exist.';
-      }
-      else {
-        @require_once($path);
-        $className = $method->getAttribute('class');
-        $methodName = ($method->getAttribute('method'));
-        if (!class_exists($className)) {
-          self::$errors[] = 'Build Ingest Form: class \'' . $className . ' does not exist.';
+        $dsid = $ingest_form->getAttribute('dsid');
+
+        $method = $ingest_form->getElementsByTagName('form_builder_method')->item(0);
+        $module = $method->getAttribute('module');
+        $path = drupal_get_path('module', !empty($module) ? $module : 'fedora_repository') . '/' . $method->getAttribute('file');
+        if (!file_exists($path)) {
+          self::$errors[] = 'Build Ingest Form: file \'' . $path . '\' does not exist.';
         }
         else {
-          $class = new $className;
-          $elements_array = $this->getIngestFormElements();
-          if (method_exists($class, $methodName)) {
-            $ret = $class->$methodName($form, $elements_array, $form_state);
+          @require_once($path);
+          $className = $method->getAttribute('class');
+          $methodName = ($method->getAttribute('method'));
+          if (!class_exists($className)) {
+            self::$errors[] = 'Build Ingest Form: class \'' . $className . ' does not exist.';
           }
           else {
-            self::$errors[] = 'Build Ingest Form: method \'' . $className . '->' . $methodName . '\' does not exist.';
+            $class = new $className;
+            $elements_array = $this->getIngestFormElements();
+            if (method_exists($class, $methodName)) {
+              $ret = $class->$methodName($form, $elements_array, $form_state);
+            }
+            else {
+              self::$errors[] = 'Build Ingest Form: method \'' . $className . '->' . $methodName . '\' does not exist.';
+            }
           }
         }
+      }
+      else {
+        self::$errors[] = 'No XML form association exists.';
       }
     }
     return $ret;
@@ -1314,9 +1316,9 @@ class ContentModel extends XMLDatastream {
 
   /**
    * Executes the ingest rules that apply to the specified file/mimetype.
-   * Returns FALSE on failure. 
-   * 
-   * If $preview is TRUE, then only execute rules with 
+   * Returns FALSE on failure.
+   *
+   * If $preview is TRUE, then only execute rules with
    * a parameter 'preview'.  Used to generate previews for the file chooser.
    *
    * @param string $file
@@ -1531,8 +1533,8 @@ class ContentModel extends XMLDatastream {
   }
 
   /**
-   * Adds an allowed mimetype to the model. 
-   * 
+   * Adds an allowed mimetype to the model.
+   *
    * @param String $type
    * @return boolean $success
    */
@@ -1585,7 +1587,7 @@ class ContentModel extends XMLDatastream {
   /**
    * getDisplayMethods ??
    * @param type $ds
-   * @return type 
+   * @return type
    */
   public function getDisplayMethods($ds) {
     $ret = FALSE;
@@ -1607,7 +1609,7 @@ class ContentModel extends XMLDatastream {
    * addDs ??
    * @param type $dsid
    * @param type $display_in_fieldset
-   * @return boolean 
+   * @return boolean
    */
   public function addDs($dsid, $display_in_fieldset = FALSE) {
     $ret = FALSE;
@@ -1636,7 +1638,7 @@ class ContentModel extends XMLDatastream {
   /**
    * removeDs ??
    * @param type $dsid
-   * @return boolean 
+   * @return boolean
    */
   public function removeDs($dsid) {
     $ret = FALSE;
@@ -1652,7 +1654,7 @@ class ContentModel extends XMLDatastream {
   /**
    * displayInFieldset ??
    * @param type $dsid
-   * @return type 
+   * @return type
    */
   public function displayInFieldset($dsid) {
     $ret = FALSE;
@@ -1666,7 +1668,7 @@ class ContentModel extends XMLDatastream {
    * setDisplayInFieldset ??
    * @param type $dsid
    * @param type $value
-   * @return boolean 
+   * @return boolean
    */
   public function setDisplayInFieldset($dsid, $value = TRUE) {
     $ret = FALSE;
@@ -1690,7 +1692,7 @@ class ContentModel extends XMLDatastream {
    * @param type $file
    * @param type $class
    * @param type $method
-   * @return boolean 
+   * @return boolean
    */
   public function setDefaultDispMeth($dsid, $module, $file, $class, $method) {
     $ret = FALSE;
@@ -1729,7 +1731,7 @@ class ContentModel extends XMLDatastream {
    * @param type $file
    * @param type $class
    * @param type $method
-   * @return boolean 
+   * @return boolean
    */
   public function removeDispMeth($dsid, $module, $file, $class, $method) {
     $ret = FALSE;
@@ -1761,7 +1763,7 @@ class ContentModel extends XMLDatastream {
    * @param type $class
    * @param type $method
    * @param type $default
-   * @return boolean 
+   * @return boolean
    */
   public function addDispMeth($dsid, $module, $file, $class, $method, $default = FALSE) {
     $ret = FALSE;
@@ -1783,7 +1785,7 @@ class ContentModel extends XMLDatastream {
   /**
    * getAddDsMethod ??
    * @param type $ds
-   * @return type 
+   * @return type
    */
   public function getAddDsMethod($ds) {
     $ret = FALSE;
@@ -1805,7 +1807,7 @@ class ContentModel extends XMLDatastream {
   /**
    * getIngestRule ??
    * @param type $rule_id
-   * @return type 
+   * @return type
    */
   public function getIngestRule($rule_id) {
     $ret = FALSE;
@@ -1821,7 +1823,7 @@ class ContentModel extends XMLDatastream {
    * removeAppliesTo ??
    * @param type $rule_id
    * @param type $type
-   * @return boolean 
+   * @return boolean
    */
   public function removeAppliesTo($rule_id, $type) {
     $ret = FALSE;
@@ -1846,7 +1848,7 @@ class ContentModel extends XMLDatastream {
    * addAppliesTo ??
    * @param type $rule_id
    * @param type $type
-   * @return boolean 
+   * @return boolean
    */
   public function addAppliesTo($rule_id, $type) {
     $ret = FALSE;
@@ -1875,7 +1877,7 @@ class ContentModel extends XMLDatastream {
    * @param type $method
    * @param type $dsid
    * @param type $modified_files_ext
-   * @return boolean 
+   * @return boolean
    */
   public function addIngestMethod($rule_id, $module, $file, $class, $method, $dsid, $modified_files_ext) {
     $ret = FALSE;
@@ -1902,7 +1904,7 @@ class ContentModel extends XMLDatastream {
    * @param type $file
    * @param type $class
    * @param type $method
-   * @return boolean 
+   * @return boolean
    */
   public function removeIngestMethod($rule_id, $module, $file, $class, $method) {
     $ret = FALSE;
@@ -1933,7 +1935,7 @@ class ContentModel extends XMLDatastream {
    * @param type $method
    * @param type $name
    * @param type $value
-   * @return boolean 
+   * @return boolean
    */
   public function addIngestMethodParam($rule_id, $module, $file, $class, $method, $name, $value) {
     $ret = FALSE;
@@ -1985,7 +1987,7 @@ class ContentModel extends XMLDatastream {
    * @param type $class
    * @param type $method
    * @param type $name
-   * @return boolean 
+   * @return boolean
    */
   public function removeIngestMethodParam($rule_id, $module, $file, $class, $method, $name) {
     $ret = FALSE;
@@ -2028,7 +2030,7 @@ class ContentModel extends XMLDatastream {
   /**
    * removeIngestRule ??
    * @param type $rule_id
-   * @return type 
+   * @return type
    */
   public function removeIngestRule($rule_id) {
     $ret = FALSE;
@@ -2047,7 +2049,7 @@ class ContentModel extends XMLDatastream {
    * @param type $method
    * @param type $dsid
    * @param type $modified_files_ext
-   * @return type 
+   * @return type
    */
   public function addIngestRule($applies_to, $module, $file, $class, $method, $dsid, $modified_files_ext) {
     $ret = FALSE;
@@ -2065,7 +2067,7 @@ class ContentModel extends XMLDatastream {
 
   /**
    * getIngestRules ??
-   * @return type 
+   * @return type
    */
   public function getIngestRules() {
     $ret = FALSE;
@@ -2109,7 +2111,7 @@ class ContentModel extends XMLDatastream {
 
   /**
    * getIngestFormAttributes ??
-   * @return type 
+   * @return type
    */
   public function getIngestFormAttributes() {
     $ret = FALSE;
@@ -2129,7 +2131,7 @@ class ContentModel extends XMLDatastream {
    * @param type $page
    * @param type $hide_file_chooser
    * @param type $redirect
-   * @return boolean 
+   * @return boolean
    */
   public function editIngestFormAttributes($dsid, $page, $hide_file_chooser = FALSE, $redirect = TRUE) {
     $ret = FALSE;
@@ -2156,7 +2158,7 @@ class ContentModel extends XMLDatastream {
 
   /**
    * getIngestFormBuilderMethod
-   * @return type 
+   * @return type
    */
   public function getIngestFormBuilderMethod() {
     $ret = FALSE;
@@ -2178,7 +2180,7 @@ class ContentModel extends XMLDatastream {
    * @param type $class
    * @param type $method
    * @param type $handler
-   * @return boolean 
+   * @return boolean
    */
   public function editIngestFormBuilderMethod($module, $file, $class, $method, $handler) {
     $ret = FALSE;
@@ -2196,7 +2198,7 @@ class ContentModel extends XMLDatastream {
 
   /**
    * Find the form element with name $name.
-   * 
+   *
    * @param string $name
    *   The name of the form element to find.
    * @return DOMElement
@@ -2267,7 +2269,7 @@ class ContentModel extends XMLDatastream {
    *
    * @param string $name
    *   Name of the form to remove.
-   * 
+   *
    * @return boolean
    *   TRUE on success, FALSE otherwise.
    */
