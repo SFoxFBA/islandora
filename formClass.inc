@@ -549,7 +549,8 @@ class formClass {
     return array(
       'indicator' => array(
         '#type' => 'fieldset',
-        '#title' => t('Ingest digital object into collection_pid !collection_label Step #1', array('collection_pid' => $collection_pid, '!collection_label' => $collection_label)),
+        //DTC198 remove pid '#title' => t('Ingest digital object into collection_pid !collection_label Step #1', array('collection_pid' => $collection_pid, '!collection_label' => $collection_label)),
+        '#title' => t('Ingest digital object, Step #1'),
         'models' => array(
           '#type' => 'select',
           '#title' => t('Content models available'),
