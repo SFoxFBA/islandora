@@ -5,6 +5,7 @@
  * Fedora Item
  */
 define('RELS_EXT_URI', 'info:fedora/fedora-system:def/relations-external#');
+define('RELS_INT_URI', 'info:fedora/fedora-system:def/relations-internal#'); //SFOX
 define("FEDORA_MODEL_URI", 'info:fedora/fedora-system:def/model#');
 define("ISLANDORA_PAGE_URI", 'info:islandora/islandora-system:def/pageinfo#');
 define("FOAF_URI", 'http://xmlns.com/foaf/spec/'); //FBA MODIFICATION BY NBYWELL 10/04/2013
@@ -64,6 +65,7 @@ class Fedora_Item {
 
     $this->pid = $pid;
     if (isset(Fedora_Item::$instantiated_pids[$pid])) {
+
       $this->objectProfile = & Fedora_Item::$instantiated_pids[$pid]->objectProfile;
       $this->datastreams = & Fedora_Item::$instantiated_pids[$pid]->datastreams;
       $this->datastreams_list = & Fedora_Item::$instantiated_pids[$pid]->datastreams_list;
@@ -234,7 +236,7 @@ class Fedora_Item {
    * @param string $logMessage
    * @param boolean $quiet
    */
-  function add_or_modify_by_reference($external_url, $dsid, $label, $mime_type, $controlGroup = 'M', $force = FALSE, $logMessage = 'Modified by Islandora API', $quiet=FALSE) {
+  function add_or_modify_by_reference($external_url, $dsid, $label, $mime_type, $controlGroup = 'M', $force = FALSE, $logMessage = 'Modified by Islandora API', $quiet = FALSE) {
     global $base_url;
     if (array_key_exists($dsid, $this->datastreams)) {
       $this->modify_datastream_by_reference($external_url, $dsid, $label, $mime_type, $force, $logMessage, $quiet);
@@ -273,7 +275,7 @@ class Fedora_Item {
       // Avoid new instantiations in long-running processes.
       $relsextxml = new DOMDocument();
     }
-    
+
     $ds_list = $this->get_datastreams_list_as_array();
     $f_prefix = 'info:fedora/';
     if (!array_key_exists('RELS-EXT', $ds_list)) {
@@ -287,7 +289,7 @@ RDF;
     }
 
     $relsext = $this->get_datastream_dissemination('RELS-EXT');
-    
+
     if ($literal_value == REL_TYPE_URI && strpos($object, $f_prefix) !== 0) {
       $object = $f_prefix . $object;
     }
@@ -303,8 +305,8 @@ RDF;
     }
     $description = $description->item(0);
 
-      // Create the new relationship node.
-      $newrel = $relsextxml->createElementNS($namespaceURI, $relationship);
+    // Create the new relationship node.
+    $newrel = $relsextxml->createElementNS($namespaceURI, $relationship);
 
     if ($literal_value > 0) {
       $newrel->appendChild($relsextxml->createTextNode($object));
@@ -326,7 +328,7 @@ RDF;
     }
 
     $description->appendChild($newrel);
-    
+
     return $this->modify_datastream($relsextxml->saveXML(), 'RELS-EXT', "Fedora Object-to-Object Relationship Metadata", 'application/rdf+xml');
     //print ($description->dump_node());
     /*
@@ -361,30 +363,30 @@ RDF;
    */
   function purge_relationships($relationship, $object, $namespaceURI = RELS_EXT_URI, $literal_value = FALSE) {
     $relsext = trim($this->get_datastream_dissemination('RELS-EXT'));
-    
+
     $relsextxml = new DomDocument();
     $relsextxml->loadXML($relsext);
     $modified = FALSE;
     $rels = $relsextxml->getElementsByTagNameNS($namespaceURI, $relationship);
     if (!empty($rels)) {
       foreach ($rels as $rel) {
-        if (  //If either no object is specified, or the object matches (in either the literal or URI case), remove this node from it's parent, and mark as changed.
-          empty($object) || 
-          (($literal_value == RELS_TYPE_URI) && $rel->getAttributeNS('http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'resource') == $object) ||
-          (($literal_value == RELS_TYPE_PLAIN_LITERAL) && $rel->textContent == $object) ||
-          (($literal_value == RELS_TYPE_STRING) && $rel->getAttribute('rdf:datatype') == 'http://www.w3.org/2001/XMLSchema#string' && $rel->textContent == $object) ||
-          (($literal_value == RELS_TYPE_INT) && $rel->getAttribute('rdf:datatype') == 'http://www.w3.org/2001/XMLSchema#int' && intval($rel->textContent) == $object)) {
+        if (//If either no object is specified, or the object matches (in either the literal or URI case), remove this node from it's parent, and mark as changed.
+            empty($object) ||
+            (($literal_value == RELS_TYPE_URI) && $rel->getAttributeNS('http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'resource') == $object) ||
+            (($literal_value == RELS_TYPE_PLAIN_LITERAL) && $rel->textContent == $object) ||
+            (($literal_value == RELS_TYPE_STRING) && $rel->getAttribute('rdf:datatype') == 'http://www.w3.org/2001/XMLSchema#string' && $rel->textContent == $object) ||
+            (($literal_value == RELS_TYPE_INT) && $rel->getAttribute('rdf:datatype') == 'http://www.w3.org/2001/XMLSchema#int' && intval($rel->textContent) == $object)) {
           $rel->parentNode->removeChild($rel);
           $modified = TRUE;
         }
       }
     }
-    
+
     //Save changes.
     if ($modified) {
       $this->modify_datastream($relsextxml->saveXML(), 'RELS-EXT', "Fedora Object-to-Object Relationship Metadata", 'text/xml');
     }
-    
+
     //Return whether or not we've introduced any changes.
     return $modified;
   }
@@ -505,8 +507,7 @@ RDF;
         break;
       }
       $cursor += count($resultelements->resultList->objectFields);
-      if (count($resultelements->resultList->objectFields) < $max_results
-          || count($resultelements->resultList->objectFields) == 0) {
+      if (count($resultelements->resultList->objectFields) < $max_results || count($resultelements->resultList->objectFields) == 0) {
         $done = TRUE;
       }
       foreach ($resultelements->resultList->objectFields as $obj) {
@@ -542,7 +543,7 @@ RDF;
    * @param type $quiet
    * @return null 
    */
-  function get_datastream_dissemination($dsid, $as_of_date_time = "", $quiet=TRUE) {
+  function get_datastream_dissemination($dsid, $as_of_date_time = "", $quiet = TRUE) {
     if (!array_key_exists($dsid, $this->datastreams)) {
       return NULL;
     }
@@ -761,7 +762,8 @@ RDF;
     $relationships = array();
     try {
       $relsext = $this->get_datastream_dissemination('RELS-EXT');
-    } catch (exception $e) {
+    }
+    catch (exception $e) {
       drupal_set_message(t("Error retrieving RELS-EXT of object $pid"), 'error');
       return $relationships;
     }
@@ -797,7 +799,7 @@ RDF;
         RELS_EXT_URI,
         FEDORA_MODEL_URI,
         FOAF_URI, /* FBA MODIFICATION BY NBYWELL 10/04/2013 */
-        FBA_URI,  /* FBA MODIFICATION BY NBYWELL 21/05/2013 */
+        FBA_URI, /* FBA MODIFICATION BY NBYWELL 21/05/2013 */
         ISLANDORA_PAGE_URI,
         ISLANDORA_RELS_EXT_URI,
         ISLANDORA_RELS_INT_URI,
@@ -809,7 +811,8 @@ RDF;
     $relationships = array();
     try {
       $relsext = $this->get_datastream_dissemination('RELS-EXT');
-    } catch (exception $e) {
+    }
+    catch (exception $e) {
       drupal_set_message(t('Error retrieving RELS-EXT of object %pid.', array('%pid' => $pid)), 'error');
       return $relationships;
     }
@@ -1024,8 +1027,9 @@ RDF;
 
       try {
         self::ingest_from_FOXML_file($path . '/' . $file);
-      } catch (exception $e) {
-
+      }
+      catch (exception $e) {
+        
       }
     }
     // Close.
@@ -1043,7 +1047,7 @@ RDF;
    *
    * @return type
    */
-  function modify_object($label = '', $state = NULL, $ownerId = NULL, $logMessage = 'Modified by Islandora API', $quiet=TRUE) {
+  function modify_object($label = '', $state = NULL, $ownerId = NULL, $logMessage = 'Modified by Islandora API', $quiet = TRUE) {
     $params = array(
       'pid' => $this->pid,
       'ownerId' => $ownerId,
@@ -1080,7 +1084,7 @@ RDF;
    *   Error suppression?  Refer to soap_call for usage
    *   (just passed along here).
    */
-  function modify_datastream($filename_or_content, $dsid, $label, $mime_type, $force = FALSE, $logMessage='Modified by Islandora API', $quiet=FALSE) {
+  function modify_datastream($filename_or_content, $dsid, $label, $mime_type, $force = FALSE, $logMessage = 'Modified by Islandora API', $quiet = FALSE) {
     $toReturn = NULL;
 
     // Determine if it's inline xml; if it is, modify by value.
@@ -1092,7 +1096,7 @@ RDF;
       else {
         $content = $filename_or_content;
       }
-      
+
       $toReturn = $this->modify_datastream_by_value($content, $dsid, $label, $mime_type, $force, $logMessage);
     }
     // Otherwise, write to web-accessible temp file and modify by reference.
@@ -1111,9 +1115,9 @@ RDF;
         $file = file_save_data($filename_or_content, file_directory_path());
         $created_temp = TRUE;
       }
-      
+
       $file_url = file_create_url($file);
-      
+
       $toReturn = $this->modify_datastream_by_reference($file_url, $dsid, $label, $mime_type, $force, $logMessage);
 
       if ($created_temp && is_file($file) && is_writable($file)) {
@@ -1137,7 +1141,7 @@ RDF;
    *
    * @return type
    */
-  function modify_datastream_by_reference($external_url, $dsid, $label, $mime_type, $force = FALSE, $logMessage = 'Modified by Islandora API', $quiet=FALSE) {
+  function modify_datastream_by_reference($external_url, $dsid, $label, $mime_type, $force = FALSE, $logMessage = 'Modified by Islandora API', $quiet = FALSE) {
     $params = array(
       'pid' => $this->pid,
       'dsID' => $dsid,
@@ -1167,7 +1171,7 @@ RDF;
    *
    * @return type
    */
-  function modify_datastream_by_value($content, $dsid, $label, $mime_type, $force = FALSE, $logMessage = 'Modified by Islandora API', $quiet=FALSE) {
+  function modify_datastream_by_value($content, $dsid, $label, $mime_type, $force = FALSE, $logMessage = 'Modified by Islandora API', $quiet = FALSE) {
     $params = array(
       'pid' => $this->pid,
       'dsID' => $dsid,
@@ -1226,7 +1230,8 @@ RDF;
     $url = (
         in_array($function, self::$SoapManagedFunctions) ?
             variable_get('fedora_soap_manage_url', 'http://localhost:8080/fedora/wsdl?api=API-M') :
-            variable_get('fedora_soap_url', 'http://localhost:8080/fedora/services/access?wsdl')
+            //SFOX this is the 12.2 value variable_get('fedora_soap_url', 'http://localhost:8080/fedora/services/access?wsdl')
+            variable_get('fedora_soap_url', 'http://localhost:8080/fedora/wsdl?api=API-A')
         );
     try {
       $soap_client = self::$connection_helper->getSoapClient($url);
@@ -1240,7 +1245,8 @@ RDF;
         watchdog('fedora_repository', 'Error trying to get SOAP client connection.');
         return NULL;
       }
-    } catch (Exception $e) {
+    }
+    catch (Exception $e) {
       if (!$quiet && user_access($VIEW_FEDORA_SOAP_ERROR_MESSAGES)) {
         preg_match('/org\.fcrepo\.server\.security\.xacml\.pep\.AuthzDeniedException/', $e->getMessage()) ?
                 drupal_set_message(t('Insufficient permissions to call SOAP function "%func".', array('%func' => $function)), 'error') :
@@ -1341,5 +1347,126 @@ RDF;
    * Returns an associative array of relationships that this item has
    * in its RELS-EXT.
    */
-}
 
+  
+  /* SFOX COPIED FROM v13 code */
+  /**
+   * Extension of add_relationship(), which acts on RELS-INT.
+   *
+   * @param $dsid
+   *   A string containing either the base dsid (EXAMPLE)
+   *   or URI to the datastream (info:fedora/pid/EXAMPLE)
+   */
+  function add_dsid_relationship($dsid, $relationship, $object, $namespaceURI = RELS_EXT_URI, $literal_value = RELS_TYPE_URI) {
+    static $relsxml = NULL;
+    if ($relsxml === NULL) {
+      // Avoid new instantiations in long-running processes.
+      $relsxml = new DOMDocument();
+    }
+
+    $f_prefix = 'info:fedora/';
+    if (!array_key_exists('RELS-INT', $this->datastreams)) {
+      $rdf_string = <<<RDF
+        <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
+RDF;
+      $this->add_datastream_from_string($rdf_string, 'RELS-INT', 'Fedora datastream relationship metadata', 'application/rdf+xml', 'X');
+    }
+
+    $rels_text = $this->get_datastream_dissemination('RELS-INT');
+
+    if (strpos($dsid, $f_prefix) !== 0) {
+      $dsid = $f_prefix . $this->pid . '/' . $dsid;
+    }
+
+    $relsxml->loadXML($rels_text);
+    $descs = $relsxml->getElementsByTagNameNS('http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'Description');
+    $description = NULL;
+    foreach ($descs as $desc) {
+      if ($desc->getAttributeNS('http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'about') == $dsid) {
+        $description = $desc;
+        break;
+      }
+    }
+
+    // Create the description element if we didn't find it...
+    if ($description === NULL) {
+      $description = $relsxml->createElementNS('http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'rdf:Description');
+      $description->setAttributeNS('http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'rdf:about', $dsid);
+      $relsxml->documentElement->appendChild($description);
+    }
+
+    foreach ((array) $object as $obj) {
+      if ($literal_value == RELS_TYPE_URI && strpos($obj, $f_prefix) !== 0) {
+        $obj = $f_prefix . $object;
+      }
+
+      // Create the new relationship node.
+      $newrel = $relsxml->createElementNS($namespaceURI, $relationship);
+
+      $this->buildRelsStatement($newrel, $obj, $literal_value);
+
+      $description->appendChild($newrel);
+    }
+
+    return $this->modify_datastream($relsxml->saveXML(), 'RELS-INT', "Fedora Datastream Relationship Metadata", 'application/rdf+xml');
+  }
+
+  /**
+   * Extension of purge_relationships, which acts on RELS-INT.
+   *
+   * @param string $dsid
+   *   A string containing either the base dsid (EXAMPLE)
+   *   or URI to the datastream (info:fedora/pid/EXAMPLE)
+   */
+  function purge_dsid_relationships($dsid, $relationship, $object, $namespaceURI = RELS_EXT_URI, $literal_value = FALSE) {
+    $f_prefix = 'info:fedora/';
+    if (strpos($dsid, $f_prefix) !== 0) {
+      $dsid = $f_prefix . $this->pid . '/' . $dsid;
+    }
+
+    $relsxml = new DOMDocument();
+    $relsint = trim($this->get_datastream_dissemination('RELS-INT'));
+    $modified = FALSE;
+    if ($relsint && $relsxml->loadXML($relsint)) {
+
+
+      $descs = $relsxml->getElementsByTagNameNS('http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'Description');
+      $description = NULL;
+      foreach ($descs as $desc) {
+        if ($dsid === NULL || $desc->getAttributeNS('http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'about') == $dsid) {
+          $rels = $desc->getElementsByTagNameNS($namespaceURI, $relationship);
+          if (!empty($rels)) {
+            // Iterate backwards so if we delete something our pointer doesn't get out of sync.
+            for ($i = $rels->length; $i > 0; $i--) {
+              $rel = $rels->item($i - 1);
+              //      foreach ($rels as $rel) { // moving forward like this caused iteration errors when something was deleted
+              // If either no object is specified, or the object matches (in either the literal or URI case), remove this node from it's parent, and mark as changed.
+              if (
+                  empty($object) ||
+                  (($literal_value == RELS_TYPE_URI) && $rel->getAttributeNS('http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'resource') == $object) ||
+                  (($literal_value == RELS_TYPE_PLAIN_LITERAL) && $rel->textContent == $object) ||
+                  (($literal_value == RELS_TYPE_STRING) && $rel->getAttribute('rdf:datatype') == 'http://www.w3.org/2001/XMLSchema#string' && $rel->textContent == $object) ||
+                  (($literal_value == RELS_TYPE_INT) && $rel->getAttribute('rdf:datatype') == 'http://www.w3.org/2001/XMLSchema#int' && intval($rel->textContent) == $object)) {
+                $rel->parentNode->removeChild($rel);
+                $modified = TRUE;
+              }
+            }
+          }
+
+          if ($desc->getAttributeNS('http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'about') == $dsid) {
+            break;
+          }
+        }
+      }
+
+      // Save changes.
+      if ($modified) {
+        $this->modify_datastream($relsxml->saveXML(), 'RELS-INT', "Fedora Datastream Relationship Metadata", 'text/xml');
+      }
+    }
+
+    // Return whether or not we've introduced any changes.
+    return $modified;
+  }
+
+}

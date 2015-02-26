@@ -550,13 +550,13 @@ class formClass {
       'indicator' => array(
         '#type' => 'fieldset',
         //DTC198 remove pid '#title' => t('Ingest digital object into collection_pid !collection_label Step #1', array('collection_pid' => $collection_pid, '!collection_label' => $collection_label)),
-        '#title' => t('Ingest digital object, Step #1'),
+        '#title' => t('Select the type and then click on the "Next" button:'),
         'models' => array(
           '#type' => 'select',
-          '#title' => t('Content models available'),
+          '#title' => t('Data Component Type'),
           '#options' => $potential_models,
           '#default_value' => $selected_model,
-          '#description' => t('Content models define datastream composition, relationships between this and other content models, and the mandatory behaviors associated with each digital object.<br /> Additional information may be found <a href="https://wiki.duraspace.org/display/FEDORACREATE/Content+Models+Overview">here.</a>'),
+          '#description' => t(''),
         ),
       ),
       'collection_pid' => array(

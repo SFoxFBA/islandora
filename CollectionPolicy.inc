@@ -34,7 +34,7 @@ class CollectionPolicy extends XMLDatastream {
    * @param boolean $preFetch = TRUE
    * @return CollectionPolicy $ret
    */
-  static function loadFromCollection($pid, $preFetch=TRUE) {
+  static function loadFromCollection($pid, $preFetch = TRUE) {
     $ret = FALSE;
     module_load_include('inc', 'fedora_repository', 'api/fedora_item');
 
@@ -59,7 +59,8 @@ class CollectionPolicy extends XMLDatastream {
       if (!empty($ds) || !$preFetch) {
         $ret = new CollectionPolicy($ds, $pid, $dsid);
       }
-    } catch (SOAPException $e) {
+    }
+    catch (SOAPException $e) {
       $ret = FALSE;
     }
     return $ret;
@@ -293,7 +294,7 @@ class CollectionPolicy extends XMLDatastream {
    * @param BOOLEAN $recurse 
    * @return string $path
    */
-  public function getStagingArea($recurse=TRUE) {
+  public function getStagingArea($recurse = TRUE) {
     $ret = FALSE;
     if ($this->validate()) {
       if ($this->staging_area === NULL) {
@@ -394,12 +395,19 @@ class CollectionPolicy extends XMLDatastream {
     if ($this->validate()) {
       module_load_include('inc', 'fedora_repository', 'ContentModel');
       $ret = array();
+      $thisxml = $this->xml->saveXML();
+      $elbytagname = $this->xml->getElementsByTagName('content_models');
+      foreach ($elbytagname as $thing) {
+        $summat = $thing->ownerDocument->saveXML($thing);
+      }
+      $elbytagnamezero = $this->xml->getElementsByTagName('content_models')->item(0);
+      $summat = $elbytagnamezero->ownerDocument->saveXML($elbytagnamezero);
       $content_models = $this->xml->getElementsByTagName('content_models')->item(0)->getElementsByTagName('content_model');
       for ($i = 0; $i < $content_models->length; $i++) {
-        $cm = ContentModel::loadFromModel($content_models->item($i)->getAttribute('pid'),
-            $content_models->item($i)->getAttribute('dsid'),
-            $content_models->item($i)->getAttribute('namespace'),
-            $content_models->item($i)->getAttribute('name'));
+        $itemi = $content_models->item($i);
+        $summat = $itemi->ownerDocument->saveXML($itemi);
+        $cm = ContentModel::loadFromModel(
+                $content_models->item($i)->getAttribute('pid'), $content_models->item($i)->getAttribute('dsid'), $content_models->item($i)->getAttribute('namespace'), $content_models->item($i)->getAttribute('name'));
         if ($cm !== FALSE) {
           $ret[] = $cm;
         }
