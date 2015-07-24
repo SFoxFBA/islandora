@@ -223,7 +223,7 @@ class CollectionClass {
         $query_string = "SELECT ?object ?title ?content FROM <#ri> WHERE {";
         //
         //SFOX hasResource has been replaced by individual class (resource) RDFs
-        $resourcerdfs = sidora_return_forward_fba_resource_rdfs();
+        $resourcerdfs = sidora_return_fba_resource_rdfs();
         $arraycount = count($resourcerdfs);
         foreach ($resourcerdfs as $key => $keyvalue) {
           $query_string .= "<info:fedora/{$pid}> <fedora-rels-ext:" . $keyvalue . "> ?object";
