@@ -9,6 +9,8 @@ define('RELS_INT_URI', 'info:fedora/fedora-system:def/relations-internal#'); //S
 define("FEDORA_MODEL_URI", 'info:fedora/fedora-system:def/model#');
 define("ISLANDORA_PAGE_URI", 'info:islandora/islandora-system:def/pageinfo#');
 define("FOAF_URI", 'http://xmlns.com/foaf/spec/'); //FBA MODIFICATION BY NBYWELL 10/04/2013
+define("PURL_ELEMENTS_URI", 'http://purl.org/dc/elements/1.1/'); //FBA MODIFICATION BY NBYWELL 05/10/2015
+define("PURL_TERMS_URI", 'http://purl.org/dc/terms/'); //FBA MODIFICATION BY NBYWELL 05/10/2015
 define("FBA_URI", 'http://fba.org.uk/schemas/fba/fba_rdf/1.0.0/'); //FBA MODIFICATION BY NBYWELL 21/05/2013
 define("ISLANDORA_RELS_EXT_URI", 'http://islandora.ca/ontology/relsext#');
 define("ISLANDORA_RELS_INT_URI", "http://islandora.ca/ontology/relsint#");
