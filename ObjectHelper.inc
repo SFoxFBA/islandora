@@ -19,6 +19,9 @@ class ObjectHelper {
   public static $INGEST_FEDORA_OBJECTS = 'ingest new fedora objects';
   public static $EDIT_TAGS_DATASTREAM = 'edit tags datastream';
   public static $VIEW_DETAILED_CONTENT_LIST = 'view detailed list of content';
+  public static $ADD_UPLOADED_FILES = 'Add Uploaded Files'; //SFOX
+  public static $DELETE_UPLOADED_FILES = 'Delete Uploaded Files'; //SFOX
+  
 
   // TODO: Make this into a static member constant
   public $availableDataStreamsText = 'Detailed list of content';

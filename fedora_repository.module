@@ -265,6 +265,65 @@ function fedora_repository_ingest_form(&$form_state, $collection_pid, $collectio
 }
 
 /**
+ * fedora repository ingest form submit IS THIS NEEDED???
+ * @global type $base_url
+ * @global type $user
+ * @param array $form
+ * @param array $form_state 
+ */
+function fedora_repository_manage_form_submit(array $form, array &$form_state) {
+//only validate the form if the submit button was pressed (other buttons may be used for AHAH
+  if ($form_state['ahah_submission']) {
+    $form_state['submitted'] = FALSE;
+    return;
+  }
+  //ddebug_backtrace();
+  if ($form_state['storage']['xml'] && module_exists('islandora_content_model_forms')) {
+    module_load_include('inc', 'islandora_content_model_forms', 'ManageObjectFilesForm');
+    $xml_form = new ManageObjectFilesForm();
+    $xml_form->submit($form, $form_state);
+  }
+  elseif (strpos($form_state['clicked_button']['#id'], 'edit-submit') === 0) {
+    global $base_url;
+    module_load_include('inc', 'fedora_repository', 'CollectionClass');
+    module_load_include('inc', 'fedora_repository', 'CollectionPolicy');
+    module_load_include('inc', 'fedora_repository', 'ContentModel');
+
+    $contentModelPid = ContentModel::getPidFromIdentifier($form_state['values']['models']);
+    $contentModelDsid = ContentModel::getDSIDFromIdentifier($form_state['values']['models']);
+    $err = TRUE;
+    $redirect = TRUE;
+    if (($cp = CollectionPolicy::loadFromCollection($form_state['values']['collection_pid'])) !== FALSE) {
+      $relationship = $cp->getRelationship();
+
+      if (($cm = ContentModel::loadFromModel($contentModelPid, $contentModelDsid)) !== FALSE) {
+        $pid = $cp->getNextPid($contentModelDsid);
+        global $user;
+        $form_state['values']['user_id'] = $user->name;
+        $form_state['values']['pid'] = $pid;
+        $form_state['values']['content_model_pid'] = $contentModelPid;
+        $form_state['values']['relationship'] = $relationship;
+
+        $err = (!$cm->execFormHandler($form_state['values'], $form_state));
+
+        $_SESSION['fedora_ingest_files'] = ''; //empty this variable
+
+        $attr = $cm->getIngestFormAttributes();
+        $redirect = $attr['redirect'];
+
+        if ($redirect) {
+          $form_state['storage'] = NULL;
+        }
+      }
+    }
+
+    if ($redirect) {
+      $form_state['redirect'] = ($err) ? ' ' : url("fedora/repository/{$form_state['values']['collection_pid']}");
+    }
+  }
+}
+
+/**
  * fedora repository purge object form
  * @global type $base_url
  * @param type $form_state
