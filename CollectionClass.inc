@@ -226,7 +226,7 @@ class CollectionClass {
         $resourcerdfs = sidora_return_fba_resource_rdfs();
         $arraycount = count($resourcerdfs);
         foreach ($resourcerdfs as $key => $keyvalue) {
-          $query_string .= "<info:fedora/{$pid}> <fedora-rels-ext:" . $keyvalue . "> ?object";
+          $query_string .= "<info:fedora/{$pid}> <" . FBA_URI . $keyvalue . "> ?object";
           if ($key < $arraycount - 1) { //as arraycounts don't start at zero
             $query_string .= ' or ';
           }
